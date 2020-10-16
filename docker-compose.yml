@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  ftpd:
+    build:
+      context: ./ftp
+    ports:
+      - "21:21"
+      - "30000-30009:30000-30009"
+    volumes:
+      - /camera:/root
+
