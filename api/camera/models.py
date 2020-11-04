@@ -27,12 +27,18 @@ class Recording(models.Model):
     camera = models.ForeignKey('Camera', on_delete=models.CASCADE)
     file_path = models.CharField(max_length=255)
     recording_date_time = models.DateTimeField() # start of the recording
+    duration = models.FloatField(help_text="duration of recording in seconds")
+    duration = models.FloatField(help_text="duration of recording in seconds")
+    nbr_frames = models.IntegerField(help_text="number of video frames")
+    resolution = models.CharField(max_length=64)
+    processed_by_analytics = models.BooleanField(default=False)
 
+'''
 FEATURE_CHOICES = [
     ('face_front', 'face_front'),
 ]
 
-class RecordingFeature(models.Model):
+#class RecordingFeature(models.Model):
     recording = models.ForeignKey('Recording', on_delete=models.CASCADE)
     feature_type =  models.CharField(max_length=80, choices=FEATURE_CHOICES)
     file_path = models.CharField(max_length=255)
@@ -40,4 +46,4 @@ class RecordingFeature(models.Model):
     used_for_training = models.BooleanField(default=False)
     date_time  = models.DateTimeField()
     person = models.ForeignKey(Person, blank=True, on_delete=models.CASCADE)
-
+'''
