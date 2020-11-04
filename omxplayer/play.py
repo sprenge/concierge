@@ -66,13 +66,21 @@ def get_screen_resolution():
 def play_stream(url, x1, y1, x2, y2, sound, hdmi):
     win = str(x1) + ',' + str(y1) + ',' + str(x2) + ',' + str(y2) 
     cmd_list =  ['omxplayer', '--blank']
-    if sound:
+    if not sound:
         cmd_list.append('-n')
         cmd_list.append('-1')
+    display = 2
+    if hdmi == 1:
+        display = 7
+    cmd_list.append("--display")
+    cmd_list.append(str(display
+    ))
     cmd_list.append('--win')
     cmd_list.append(win)
     cmd_list.append(url)
-    p = subprocess.Popen(['omxplayer', '-n', '-1', '--blank', '--win', win, url], stdout=subprocess.PIPE)
+    print (cmd_list)
+    # p = subprocess.Popen(['omxplayer', '-n', '-1', '--blank', '--win', win, url], stdout=subprocess.PIPE)
+    p = subprocess.Popen(cmd_list, stdout=subprocess.PIPE)
     p.communicate()
 
 if __name__ == '__main__':
