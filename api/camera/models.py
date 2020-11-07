@@ -14,6 +14,8 @@ class CameraType(models.Model):
     description = models.CharField(max_length=255)
     brand = models.ForeignKey('CameraBrand', on_delete=models.CASCADE)
     
+# regex = r'^[A-z][\w-]{2,31}$'
+# name = models.CharField(max_length=32, unique=True , validator_list=[validators.MatchesRegularExpression(regex)] )
 class Camera(models.Model):
     name = models.CharField(max_length=255, unique=True)
     ip_address = models.GenericIPAddressField(blank=True, null=True)
