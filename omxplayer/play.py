@@ -81,7 +81,8 @@ def play_stream(url, x1, y1, x2, y2, sound, hdmi):
     print (cmd_list)
     # p = subprocess.Popen(['omxplayer', '-n', '-1', '--blank', '--win', win, url], stdout=subprocess.PIPE)
     p = subprocess.Popen(cmd_list, stdout=subprocess.PIPE)
-    p.communicate()
+    out = p.communicate()
+    print(out)
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0")

@@ -9,6 +9,8 @@ services:
       - "30000-30009:30000-30009"
     volumes:
       - /camera:/root
+    environment:
+      - CONCIERGE_IP_ADDRESS
     restart: always
 
   ftp_push_config:
@@ -19,3 +21,10 @@ services:
       - CONCIERGE_IP_ADDRESS
     restart: always
 
+  scheduler:
+    build:
+      context: .
+      dockerfile: ./scheduler/Dockerfile
+    ports:
+      - "5100:5100"
+    restart: always

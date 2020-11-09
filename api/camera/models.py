@@ -1,4 +1,5 @@
 from django.db import models
+from django.core import validators
 from person.models import Person
 
 class CameraServices(models.Model):
@@ -14,16 +15,19 @@ class CameraType(models.Model):
     description = models.CharField(max_length=255)
     brand = models.ForeignKey('CameraBrand', on_delete=models.CASCADE)
     
-# regex = r'^[A-z][\w-]{2,31}$'
-# name = models.CharField(max_length=32, unique=True , validator_list=[validators.MatchesRegularExpression(regex)] )
+regex = r'^[A-z][-][\d+]$'
 class Camera(models.Model):
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255, unique=True, validators=[validators.RegexValidator(regex)])
     ip_address = models.GenericIPAddressField(blank=True, null=True)
     hostname = models.CharField(max_length=255, blank=True)
     user = models.CharField(max_length=255, blank=True)
     password = models.CharField(max_length=255, blank=True)
     services = models.ManyToManyField(CameraServices, blank=True)
     brand = models.ForeignKey('CameraType', on_delete=models.CASCADE)
+    live_matrix_position = models.IntegerField(default =0, help_text="display position live feed")
+    live_hdmi_port = models.IntegerField(default=99, help_text="output port (99 is none)")
+    last_recording_matrix_position = models.IntegerField(default =0, help_text="display position live feed")
+    last_recording_hdmi_port = models.IntegerField(default=99, help_text="output port (99 is none)")
 
 class Recording(models.Model):
     camera = models.ForeignKey('Camera', on_delete=models.CASCADE)
