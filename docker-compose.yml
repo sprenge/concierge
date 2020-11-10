@@ -6,6 +6,7 @@ services:
       dockerfile: ./ftp/ftpd/Dockerfile
     ports:
       - "21:21"
+      - "5101:5101"
       - "30000-30009:30000-30009"
     volumes:
       - /camera:/root
@@ -28,3 +29,18 @@ services:
     ports:
       - "5100:5100"
     restart: always
+
+  recording_reolink:
+    build:
+      context: .
+      dockerfile: ./camera/brand/reolink/Dockerfile
+      args:
+        - FLASK=$VERSION_FLASK
+        - FLASK_RESTFUL=$VERSION_FLASK_RESTFUL
+    ports:
+      - "5102:5102"
+    environment:
+      - CONCIERGE_IP_ADDRESS
+    restart: always
+
+
