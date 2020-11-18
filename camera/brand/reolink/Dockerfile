@@ -8,10 +8,12 @@ RUN pip3 install requests
 RUN pip3 install Flask==${FLASK}
 RUN pip3 install Flask-RESTful==${FLASK_RESTFUL}
 	
+COPY ./camera/brand/reolink/main.py /
 COPY ./camera/brand/reolink/recording.py /
+COPY ./camera/brand/reolink/reoconfig.py /
 
 # startup
-CMD python3 -u recording.py
+CMD python3 -u main.py
 
 EXPOSE 5102
 

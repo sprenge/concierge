@@ -1,3 +1,11 @@
 Django
 uwsgi
 PyMySQL
+mysqlclient
+Pillow
+mysql-connector-python
+django-debug-toolbar
+djangorestframework
+markdown
+django-filter
+django-timezone-field

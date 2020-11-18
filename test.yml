@@ -1,0 +1,36 @@
+version: "3.8"
+services:
+
+  nginx:
+      image: nginx:1.13
+      ports:
+        - "8000:8000"
+      volumes:
+        - /nginx/conf:/etc/nginx/conf.d
+        - /nginx/uwsgi_params:/etc/nginx/uwsgi_params
+        - /static:/static
+
+  django:
+      build: ./gui
+      command: uwsgi --socket :8001 --module gui.wsgi --py-autoreload 1 --logto /tmp/mylog.log
+      ports:
+      - "8001:8001"
+      volumes:
+        - ./gui:/code
+        - /static:/static
+        - /camera:/root
+      expose:
+        - "8001"
+
+  reolink:
+    build:
+      context: .
+      dockerfile: ./camera/brand/reolink/Dockerfile
+      args:
+        - FLASK=$VERSION_FLASK
+        - FLASK_RESTFUL=$VERSION_FLASK_RESTFUL
+    ports:
+      - "5102:5102"
+    environment:
+      - CONCIERGE_IP_ADDRESS
+    restart: always
