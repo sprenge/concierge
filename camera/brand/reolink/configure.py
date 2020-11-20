@@ -105,21 +105,19 @@ class Ftp:
 
 
 if __name__ == '__main__':
-    ip_address = '192.168.1.51'
+    ip_address = '192.168.1.14'
     l = httpLogin(ip_address, 'admin', '12345678')
     token = l.get_token()
     ftp = Ftp(token, ip_address, '192.168.1.6')
     print (ftp.get_data())
-    new_p = {'user': 'admin', 'password': '12345'}
+    new_p = {'user': 'user', 'password': '12345'}
     ftp.put_data(new_p)
-    '''
-    print("token", token)
     payload = {}
     osd = Osd(token, ip_address)
     print(osd.get_data())
-    new_p = {"name": "camera61"}
+    new_p = {"name": "camerLisa"}
     print(osd.put_data(new_p))
     sg = SystemGeneral(token, ip_address)
     new_p = {"timezone": -3600}
     sg.put_data(new_p)
-    '''
+

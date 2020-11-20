@@ -1,5 +1,18 @@
 version: "3.8"
 services:
+  ftpd:
+    build:
+      context: .
+      dockerfile: ./ftp/ftpd/Dockerfile
+    ports:
+      - "21:21"
+      - "5101:5101"
+      - "30000-30009:30000-30009"
+    volumes:
+      - /camera:/root
+    environment:
+      - CONCIERGE_IP_ADDRESS
+    restart: always
 
   nginx:
       image: nginx:1.13
