@@ -16,12 +16,28 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers, serializers, viewsets
-from camera.models import Camera, CameraListeners
+from camera.models import Camera, CameraListeners, CameraBrand, CameraType
 
-class CameraSerializer(serializers.HyperlinkedModelSerializer):
+class CameraBrandSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CameraBrand
+        fields = ['name']
+
+class CameraTypeSerializer(serializers.ModelSerializer):
+    brand = CameraBrandSerializer()
+    class Meta:
+        model = CameraType
+        fields = ['name', 'brand']
+
+class CameraSerializer(serializers.ModelSerializer):
+    brand = CameraTypeSerializer()
     class Meta:
         model = Camera
-        fields = ['name', 'user', 'password', 'ip_address']
+        fields = ['name', 'ip_address', 'brand', 'user', 'password']
+
+class CameraTypeViewSet(viewsets.ModelViewSet):
+    queryset = CameraType.objects.all()
+    serializer_class = CameraTypeSerializer
 
 class CameraViewSet(viewsets.ModelViewSet):
     queryset = Camera.objects.all()
@@ -30,7 +46,7 @@ class CameraViewSet(viewsets.ModelViewSet):
 class CameraListenerSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = CameraListeners
-        fields = ['url', 'description']
+        fields = ['url', 'callback_type', 'description']
 
 class CameraListenerViewSet(viewsets.ModelViewSet):
     queryset = CameraListeners.objects.all()
@@ -39,6 +55,7 @@ class CameraListenerViewSet(viewsets.ModelViewSet):
 router = routers.DefaultRouter()
 router.register(r'cameras', CameraViewSet)
 router.register(r'camera_listeners', CameraListenerViewSet)
+router.register(r'camera_types', CameraTypeViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),

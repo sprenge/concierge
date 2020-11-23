@@ -5,7 +5,7 @@ import requests
 from flask import Flask, jsonify
 from flask_restful import Resource, Api, reqparse
 from recording import NewRecording
-from reoconfig import ReoConfig
+import reoconfig
 
 app = Flask(__name__)
 api = Api(app)
@@ -17,14 +17,14 @@ except:
 
 # bind resource for REST API service
 api.add_resource(NewRecording, '/camera/api/v1.0/newrecording', endpoint = 'newrecording')
-api.add_resource(ReoConfig, '/camera/api/v1.0/reoconfig', endpoint = 'reoconfig')
+api.add_resource(reoconfig.ReoConfig, '/camera/api/v1.0/reoconfig', endpoint = 'reoconfig')
 
 if __name__ == '__main__':
     registration_not_done = True
     while (registration_not_done):
         try:
             r = requests.post("http://"+cia+":8000/camera_listeners/", 
-                              json={"url": "http://"+cia+":5102/camera/api/v1.0/reoconfig", "description": ""}, 
+                              json={"url": "http://"+cia+":5102/camera/api/v1.0/reoconfig", "description": "", "callback_type": 'config'}, 
                               timeout=10)
             if r.status_code == 201 or r.status_code == 400:
                 registration_not_done = False
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     while (registration_not_done):
         try:
             r = requests.post("http://"+cia+":5101/ftp/api/v1.0/registerclient",
-                              json={"url": "http://"+cia+":5102/camera/api/v1.0/newrecording"},
+                              json={"url": "http://"+cia+":5102/camera/api/v1.0/newrecording", "callback_type": 'config'},
                               timeout=10)
             if r.status_code == 201:
                 registration_not_done = False

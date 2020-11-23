@@ -4,12 +4,15 @@ services:
     build:
       context: .
       dockerfile: ./ftp/ftpd/Dockerfile
+      args:
+        - FLASK=$VERSION_FLASK
+        - FLASK_RESTFUL=$VERSION_FLASK_RESTFUL
     ports:
       - "21:21"
       - "5101:5101"
       - "30000-30009:30000-30009"
     volumes:
-      - /camera:/root
+      - /${ROOT_DIR}:/root
     environment:
       - CONCIERGE_IP_ADDRESS
     restart: always
@@ -21,17 +24,17 @@ services:
       volumes:
         - /nginx/conf:/etc/nginx/conf.d
         - /nginx/uwsgi_params:/etc/nginx/uwsgi_params
-        - /static:/static
+        - ${ROOT_DIR}/static:/static
 
   django:
       build: ./gui
-      command: uwsgi --socket :8001 --module gui.wsgi --py-autoreload 1 --logto /tmp/mylog.log
+      command: uwsgi --threads 8 --processes 8 --socket :8001 --module gui.wsgi --py-autoreload 1 --logto /tmp/mylog.log
       ports:
       - "8001:8001"
       volumes:
         - ./gui:/code
-        - /static:/static
-        - /camera:/root
+        - ${ROOT_DIR}/static:/static
+        - ${ROOT_DIR}:/root
       expose:
         - "8001"
 

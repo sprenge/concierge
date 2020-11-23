@@ -1,9 +1,11 @@
 import pytz
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.db import models
 from person.models import Person
 from timezone_field import TimeZoneField
+import requests
+
 
 class CameraServices(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -37,7 +39,7 @@ class Camera(models.Model):
     user = models.CharField(max_length=255, blank=True)
     password = models.CharField(max_length=255, blank=True)
     services = models.ManyToManyField(CameraServices, blank=True)
-    brand = models.ForeignKey('CameraType', on_delete=models.CASCADE)
+    brand = models.ForeignKey('CameraType', on_delete=models.CASCADE, related_name="camera_type")
     timezone = TimeZoneField(default='Europe/Brussels')
     live_url_hd = models.CharField(max_length=512, blank=True)
     live_url_sd = models.CharField(max_length=512, blank=True)
@@ -46,6 +48,7 @@ class Camera(models.Model):
     live_hdmi_port = models.IntegerField(default=99, help_text="output port (99 is none)")
     last_recording_matrix_position = models.IntegerField(default =0, help_text="display position live feed")
     last_recording_hdmi_port = models.IntegerField(default=99, help_text="output port (99 is none)")
+    state = models.CharField(max_length=16, default = "NOK")
 
     def __str__(self):
         return self.name
@@ -55,11 +58,30 @@ class Camera(models.Model):
 
 @receiver(pre_save, sender=Camera)
 def camera_db_changed(sender, instance, *args, **kwargs):
-    print(sender, instance)
+    payload = {
+        "name": instance.name, 
+        "ip_address": instance.ip_address,
+        "user": instance.user,
+        "password": instance.password,
+        "brand": instance.brand.brand.name,
+        "timezone": -3600,
+    }
+    listeners = CameraListeners.objects.filter(callback_type="config")
+    for listener in listeners:
+        try:
+            r = requests.post(listener.url, json=payload, timeout=5)
+            if r.status_code == 201:
+                instance.state = "OK"
+            else:
+                instance.state = "NOK"
+        except Exception as e:
+            instance.state = "NOK"
+            print(e)
 
 class CameraListeners(models.Model):
     ''' Callback if Camera table is changed '''
     url = models.CharField(max_length=255, unique=True)
+    callback_type = models.CharField(max_length=32, default='ftp')
     description = models.CharField(max_length=255, blank=True)
 
 class Recording(models.Model):

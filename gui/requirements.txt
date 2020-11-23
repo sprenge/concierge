@@ -9,3 +9,4 @@ djangorestframework
 markdown
 django-filter
 django-timezone-field
+requests

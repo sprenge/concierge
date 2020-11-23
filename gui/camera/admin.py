@@ -15,7 +15,7 @@ class CameraListenersAdmin(admin.ModelAdmin):
 
 class CameraAdmin(admin.ModelAdmin):
     model = Camera
-    list_display = ['name', 'ip_address', 'hostname', 'user', 'password', 'timezone'] 
+    list_display = ['name', 'ip_address', 'hostname', 'user', 'password', 'timezone', 'state'] 
     list_editable = ['ip_address', 'hostname', 'user', 'password', 'timezone'] 
 
 admin.site.register(Camera, CameraAdmin)
