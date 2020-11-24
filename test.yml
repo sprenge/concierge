@@ -37,6 +37,8 @@ services:
         - ${ROOT_DIR}:/root
       expose:
         - "8001"
+      environment:
+        - TIMEZONE
 
   reolink:
     build:

@@ -72,6 +72,13 @@ def camera_db_changed(sender, instance, *args, **kwargs):
             r = requests.post(listener.url, json=payload, timeout=5)
             if r.status_code == 201:
                 instance.state = "OK"
+                ret_payload = r.json()
+                if 'live_url_hd' in ret_payload:
+                    instance.live_url_hd = ret_payload['live_url_hd']
+                if 'live_url_sd' in ret_payload:
+                    instance.live_url_sd = ret_payload['live_url_sd']
+                if 'snapshot_url' in ret_payload:
+                    instance.snapshot_url = ret_payload['snapshot_url']
             else:
                 instance.state = "NOK"
         except Exception as e:

@@ -33,6 +33,7 @@ class ReoConfig(Resource):
         args = self.reqparse.parse_args()
         name = args['name']
 
+        ret_payload = {}
         if args['brand'] == "Reolink":
             l = httpLogin(args['ip_address'], args['user'], args['password'])
             token = l.get_token()
@@ -51,8 +52,9 @@ class ReoConfig(Resource):
             sg = SystemGeneral(token, args['ip_address'])
             new_p = {"timezone": -3600}
             sg.put_data(new_p)                            
-        
+            ret_payload['snapshot_url'] = 'http://'+args['ip_address']+'/cgi-bin/api.cgi?cmd=Snap&amp;channel=0&amp;rs=wuuPhkmUCeI9WG7C&amp;user='+args['user']+'&amp;password='+args['password']
+            ret_payload['live_url_hd'] = 'rtsp://'+args['user']+':'+args['password']+'@'+args['ip_address']+':554//h264Preview_01_main'
+            ret_payload['live_url_sd'] = 'rtsp://'+args['user']+':'+args['password']+'@'+args['ip_address']+':554//h264Preview_01_sub'
 
-
-        return {}, 201
+        return ret_payload, 201
 

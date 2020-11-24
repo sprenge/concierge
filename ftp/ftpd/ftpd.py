@@ -66,4 +66,6 @@ handler.passive_ports = range(30000, 30009)
 register_client_t = threading.Thread(target=register_clients, args=())
 register_client_t.start()
 server = FTPServer(("0.0.0.0", 21), handler)
+server.max_cons = 256
+server.max_cons_per_ip = 5
 server.serve_forever()
