@@ -1,54 +1,23 @@
 version: "3.8"
 services:
-  ftpd:
+  grafana:
+    image: grafana/grafana:7.3.0
+    ports:
+      - "3000:3000"
+
+  influx:
     build:
       context: .
-      dockerfile: ./ftp/ftpd/Dockerfile
+      dockerfile: ./influx/Dockerfile
       args:
         - FLASK=$VERSION_FLASK
         - FLASK_RESTFUL=$VERSION_FLASK_RESTFUL
     ports:
-      - "21:21"
-      - "5101:5101"
-      - "30000-30009:30000-30009"
+      - "8086:8086"
+      - "8083:8083"
+    environment:
+      - CONCIERGE_IP_ADDRESS
+      - INFLUXDB_ADMIN_ENABLED
     volumes:
-      - /${ROOT_DIR}:/root
-    environment:
-      - CONCIERGE_IP_ADDRESS
-    restart: always
-
-  nginx:
-      image: nginx:1.13
-      ports:
-        - "8000:8000"
-      volumes:
-        - /nginx/conf:/etc/nginx/conf.d
-        - /nginx/uwsgi_params:/etc/nginx/uwsgi_params
-        - ${ROOT_DIR}/static:/static
-
-  django:
-      build: ./gui
-      command: uwsgi --threads 8 --processes 8 --socket :8001 --module gui.wsgi --py-autoreload 1 --logto /tmp/mylog.log
-      ports:
-      - "8001:8001"
-      volumes:
-        - ./gui:/code
-        - ${ROOT_DIR}/static:/static
-        - ${ROOT_DIR}:/root
-      expose:
-        - "8001"
-      environment:
-        - TIMEZONE
-
-  reolink:
-    build:
-      context: .
-      dockerfile: ./camera/brand/reolink/Dockerfile
-      args:
-        - FLASK=$VERSION_FLASK
-        - FLASK_RESTFUL=$VERSION_FLASK_RESTFUL
-    ports:
-      - "5102:5102"
-    environment:
-      - CONCIERGE_IP_ADDRESS
+      - /camera/influx:/data
     restart: always

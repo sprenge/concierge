@@ -5,15 +5,14 @@ ARG FLASK_RESTFUL
 RUN apt-get update
 RUN apt-get -y upgrade
 RUN apt-get -y install python3-pip
-RUN pip3 install pyftpdlib
 RUN pip3 install requests
 RUN pip3 install Flask
 RUN pip3 install Flask-RESTful==${FLASK_RESTFUL}
 	
-COPY ./ftp/ftpd/ftpd.py /
+COPY ./motion/main.py /
 
 # startup
-CMD python3 -u ftpd.py
+CMD python3 -u main.py
 
-EXPOSE 21 5101 30000-30009
+EXPOSE 5104
 

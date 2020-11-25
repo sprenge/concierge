@@ -7,6 +7,10 @@ from timezone_field import TimeZoneField
 import requests
 
 
+valid = set('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789')
+def test_camera_name(s):
+    return set(s).issubset(valid)
+
 class CameraServices(models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.CharField(max_length=255, blank=True)
@@ -58,6 +62,8 @@ class Camera(models.Model):
 
 @receiver(pre_save, sender=Camera)
 def camera_db_changed(sender, instance, *args, **kwargs):
+    if not test_camera_name(instance.name):
+        raise Exception("No underscore allowed in the name")
     payload = {
         "name": instance.name, 
         "ip_address": instance.ip_address,

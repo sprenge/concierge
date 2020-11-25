@@ -5,15 +5,15 @@ ARG FLASK_RESTFUL
 RUN apt-get update
 RUN apt-get -y upgrade
 RUN apt-get -y install python3-pip
-RUN pip3 install pyftpdlib
+RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata
+RUN apt install -y libopencv-dev python3-opencv
 RUN pip3 install requests
 RUN pip3 install Flask
 RUN pip3 install Flask-RESTful==${FLASK_RESTFUL}
-	
-COPY ./ftp/ftpd/ftpd.py /
+
+COPY ./detect_shape/main.py /
 
 # startup
-CMD python3 -u ftpd.py
+CMD python3 -u main.py
 
-EXPOSE 21 5101 30000-30009
-
+EXPOSE 5103

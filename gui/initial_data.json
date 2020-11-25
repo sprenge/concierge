@@ -1,0 +1,36 @@
+[
+{
+    "model": "auth.user",
+    "fields": {
+        "password": "pbkdf2_sha256$216000$VUho5uIYa7wA$SRLhmhj9BK/bunQzxCOYWcN1AVx4vb0+C7WaBRIQEro=",
+        "last_login": "2020-11-24T17:34:20.118Z",
+        "is_superuser": true,
+        "username": "admin",
+        "first_name": "",
+        "last_name": "",
+        "email": "a@a.be",
+        "is_staff": true,
+        "is_active": true,
+        "date_joined": "2020-11-24T17:28:09.626Z",
+        "groups": [],
+        "user_permissions": []
+    }
+},
+{
+    "model": "camera.camerabrand",
+    "pk": 1,
+    "fields": {
+        "name": "Reolink",
+        "description": ""
+    }
+},
+{
+    "model": "camera.cameratype",
+    "pk": 1,
+    "fields": {
+        "name": "RLC-410",
+        "description": "",
+        "brand": 1
+    }
+}
+]

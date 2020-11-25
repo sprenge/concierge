@@ -4,33 +4,43 @@ services:
     build:
       context: .
       dockerfile: ./ftp/ftpd/Dockerfile
+      args:
+        - FLASK=$VERSION_FLASK
+        - FLASK_RESTFUL=$VERSION_FLASK_RESTFUL
     ports:
       - "21:21"
       - "5101:5101"
       - "30000-30009:30000-30009"
     volumes:
-      - /camera:/root
+      - /${ROOT_DIR}:/root
     environment:
       - CONCIERGE_IP_ADDRESS
     restart: always
 
-  ftp_push_config:
-    build:
-      context: .
-      dockerfile: ./ftp/push_config/Dockerfile
-    environment:
-      - CONCIERGE_IP_ADDRESS
-    restart: always
+  nginx:
+      image: nginx:1.13
+      ports:
+        - "8000:8000"
+      volumes:
+        - /nginx/conf:/etc/nginx/conf.d
+        - /nginx/uwsgi_params:/etc/nginx/uwsgi_params
+        - ${ROOT_DIR}/static:/static
 
-  scheduler:
-    build:
-      context: .
-      dockerfile: ./scheduler/Dockerfile
-    ports:
-      - "5100:5100"
-    restart: always
+  gui:
+      build: ./gui
+      command: uwsgi --threads 8 --processes 8 --socket :8001 --module gui.wsgi --py-autoreload 1 --logto /tmp/mylog.log
+      ports:
+      - "8001:8001"
+      volumes:
+        - ./gui:/code
+        - ${ROOT_DIR}/static:/static
+        - ${ROOT_DIR}:/root
+      expose:
+        - "8001"
+      environment:
+        - TIMEZONE
 
-  recording_reolink:
+  reolink:
     build:
       context: .
       dockerfile: ./camera/brand/reolink/Dockerfile
@@ -43,26 +53,29 @@ services:
       - CONCIERGE_IP_ADDRESS
     restart: always
 
-  db:
-    image: hypriot/rpi-mysql
-    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  detect_shape:
+    build:
+      context: .
+      dockerfile: ./detect_shape/Dockerfile
+      args:
+        - FLASK=$VERSION_FLASK
+        - FLASK_RESTFUL=$VERSION_FLASK_RESTFUL
     ports:
-      - "3306:3306"
+      - "5103:5103"
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: concierge
-      MYSQL_USER: user
-      MYSQL_PASSWORD: 12345678
-      TZ: 'Europe/Brussels'
-    volumes:
-      - /mysql:/var/lib/mysql
-      - /sql:/docker-entrypoint-initdb.d
+      - CONCIERGE_IP_ADDRESS
+    restart: always
 
-  nginx:
-      image: nginx:1.13
-      ports:
-        - "8000:8000"
-      volumes:
-        - /nginx/conf:/etc/nginx/conf.d
-        - /nginx/uwsgi_params:/etc/nginx/uwsgi_params
-        - /static:/static
+  motion_detection:
+    build:
+      context: .
+      dockerfile: ./motion/Dockerfile
+      args:
+        - FLASK=$VERSION_FLASK
+        - FLASK_RESTFUL=$VERSION_FLASK_RESTFUL
+    ports:
+      - "5104:5104"
+    environment:
+      - CONCIERGE_IP_ADDRESS
+      - ROOT_DIR
+    restart: always

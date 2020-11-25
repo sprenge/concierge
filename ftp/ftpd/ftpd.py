@@ -1,4 +1,5 @@
 import os
+import re
 import threading
 from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler
@@ -46,16 +47,33 @@ print("sending ip address : ", cia)
 
 class myFTPHandler(FTPHandler):
     def on_file_received(self, file):
+        match = re.match("^/root(.*)", file)
+        if match:
+            file  = match.group(1)
         data = {"file": file}
+        camera_name = ''
+        file_type = ''
         for url in clients:
-            print("trigger :", url)
             try:
-                r = requests.post(url, json=data, timeout=10)
-            except:
-                pass
+                r = requests.post(url, json=data, timeout=3)
+                if r.status_code == 201:
+                    ret_data = r.json()
+                    if 'camera_name' in ret_data:
+                        camera_name = ret_data['camera_name']
+                    if 'type' in ret_data:
+                        file_type = ret_data['type']
+            except Exception as e:
+                print(e)
+        
+        try:
+            data = {'file': file, 'type': file_type, 'camera_name': camera_name}
+            url = "http://"+cia+":5104/motion/api/v1.0/motion_detected"
+            r = requests.post(url, json=data, timeout=5)
+        except:
+            pass
 
 authorizer = DummyAuthorizer()
-authorizer.add_user("user", "12345", "/root", perm="elradfmwMT")
+authorizer.add_user("user", "12345", "/root/static/recordings", perm="elradfmwMT")
 #authorizer.add_anonymous("/home/nobody")
 
 # handler = FTPHandler

@@ -1,0 +1,68 @@
+version: "3.8"
+services:
+  ftpd:
+    build:
+      context: .
+      dockerfile: ./ftp/ftpd/Dockerfile
+    ports:
+      - "21:21"
+      - "5101:5101"
+      - "30000-30009:30000-30009"
+    volumes:
+      - /camera:/root
+    environment:
+      - CONCIERGE_IP_ADDRESS
+    restart: always
+
+  ftp_push_config:
+    build:
+      context: .
+      dockerfile: ./ftp/push_config/Dockerfile
+    environment:
+      - CONCIERGE_IP_ADDRESS
+    restart: always
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: ./scheduler/Dockerfile
+    ports:
+      - "5100:5100"
+    restart: always
+
+  recording_reolink:
+    build:
+      context: .
+      dockerfile: ./camera/brand/reolink/Dockerfile
+      args:
+        - FLASK=$VERSION_FLASK
+        - FLASK_RESTFUL=$VERSION_FLASK_RESTFUL
+    ports:
+      - "5102:5102"
+    environment:
+      - CONCIERGE_IP_ADDRESS
+    restart: always
+
+  db:
+    image: hypriot/rpi-mysql
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: concierge
+      MYSQL_USER: user
+      MYSQL_PASSWORD: 12345678
+      TZ: 'Europe/Brussels'
+    volumes:
+      - /mysql:/var/lib/mysql
+      - /sql:/docker-entrypoint-initdb.d
+
+  nginx:
+      image: nginx:1.13
+      ports:
+        - "8000:8000"
+      volumes:
+        - /nginx/conf:/etc/nginx/conf.d
+        - /nginx/uwsgi_params:/etc/nginx/uwsgi_params
+        - /static:/static
