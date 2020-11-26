@@ -64,6 +64,8 @@ services:
       - "5103:5103"
     environment:
       - CONCIERGE_IP_ADDRESS
+    volumes:
+      - /${ROOT_DIR}:/root
     restart: always
 
   motion_detection:

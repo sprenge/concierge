@@ -16,7 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers, serializers, viewsets
-from camera.models import Camera, CameraListeners, CameraBrand, CameraType
+from camera.models import Camera, CameraListeners, CameraBrand, CameraType, Recording
 
 class CameraBrandSerializer(serializers.ModelSerializer):
     class Meta:
@@ -31,9 +31,17 @@ class CameraTypeSerializer(serializers.ModelSerializer):
 
 class CameraSerializer(serializers.ModelSerializer):
     brand = CameraTypeSerializer()
+    # id = serializers.Field()
     class Meta:
         model = Camera
-        fields = ['name', 'ip_address', 'brand', 'user', 'password']
+        fields = ['id', 'name', 'ip_address', 'brand', 'user', 'password']
+
+class RecordingSerializer(serializers.ModelSerializer):
+    # camera = CameraSerializer()
+    
+    class Meta:
+        model = Recording
+        fields = ['camera', 'video_processed_by_analytics']
 
 class CameraTypeViewSet(viewsets.ModelViewSet):
     queryset = CameraType.objects.all()
@@ -52,10 +60,15 @@ class CameraListenerViewSet(viewsets.ModelViewSet):
     queryset = CameraListeners.objects.all()
     serializer_class = CameraListenerSerializer
 
+class CameraRecordingViewSet(viewsets.ModelViewSet):
+    queryset = Recording.objects.all()
+    serializer_class = RecordingSerializer
+
 router = routers.DefaultRouter()
 router.register(r'cameras', CameraViewSet)
 router.register(r'camera_listeners', CameraListenerViewSet)
 router.register(r'camera_types', CameraTypeViewSet)
+router.register(r'recordings', CameraRecordingViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),

@@ -65,12 +65,15 @@ class myFTPHandler(FTPHandler):
             except Exception as e:
                 print(e)
         
-        try:
-            data = {'file': file, 'type': file_type, 'camera_name': camera_name}
-            url = "http://"+cia+":5104/motion/api/v1.0/motion_detected"
-            r = requests.post(url, json=data, timeout=5)
-        except:
-            pass
+        # Trigger the motion service based on the presence of a jpeg
+        # TBC : Is this reolink specific ???
+        if file_type == 'jpg':
+            try:
+                data = {'file': file, 'type': file_type, 'camera_name': camera_name}
+                url = "http://"+cia+":5104/motion/api/v1.0/motion_detected"
+                r = requests.post(url, json=data, timeout=5)
+            except:
+                pass
 
 authorizer = DummyAuthorizer()
 authorizer.add_user("user", "12345", "/root/static/recordings", perm="elradfmwMT")

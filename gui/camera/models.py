@@ -99,14 +99,13 @@ class CameraListeners(models.Model):
 
 class Recording(models.Model):
     camera = models.ForeignKey('Camera', on_delete=models.CASCADE)
-    file_path = models.CharField(max_length=255)
-    recording_date_time = models.DateTimeField() # start of the recording
-    duration = models.FloatField(help_text="duration of recording in seconds")
-    duration = models.FloatField(help_text="duration of recording in seconds")
-    nbr_frames = models.IntegerField(help_text="number of video frames")
-    resolution = models.CharField(max_length=64)
-    processed_by_analytics = models.BooleanField(default=False)
-    low_res_file_path = models.CharField(max_length=255, blank=True)
+    file_path_video = models.CharField(max_length=512, blank=True)
+    file_path_snapshot = models.CharField(max_length=512, blank=True)
+    recording_date_time = models.DateTimeField(blank=True, null=True) # start of the recording
+    duration = models.FloatField(blank=True, null=True, help_text="duration of recording in seconds")
+    nbr_frames = models.IntegerField(blank=True, null=True, help_text="number of video frames")
+    resolution = models.CharField(blank=True, max_length=64)
+    video_processed_by_analytics = models.BooleanField(default=False)
 '''
 FEATURE_CHOICES = [
     ('face_front', 'face_front'),
