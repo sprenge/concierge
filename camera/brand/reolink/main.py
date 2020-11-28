@@ -23,7 +23,7 @@ if __name__ == '__main__':
     registration_not_done = True
     while (registration_not_done):
         try:
-            r = requests.post("http://"+cia+":8000/camera_listeners/", 
+            r = requests.post("http://"+cia+":8000/rest/camera_listeners/", 
                               json={"url": "http://"+cia+":5102/camera/api/v1.0/reoconfig", "description": "", "callback_type": 'config'}, 
                               timeout=10)
             if r.status_code == 201 or r.status_code == 400:

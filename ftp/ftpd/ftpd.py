@@ -52,8 +52,10 @@ class myFTPHandler(FTPHandler):
             file  = match.group(1)
         data = {"file": file}
         camera_name = ''
+        snapshot_url = None
         file_type = ''
         for url in clients:
+            print("url", url)
             try:
                 r = requests.post(url, json=data, timeout=3)
                 if r.status_code == 201:
@@ -70,6 +72,8 @@ class myFTPHandler(FTPHandler):
         if file_type == 'jpg':
             try:
                 data = {'file': file, 'type': file_type, 'camera_name': camera_name}
+                if snapshot_url:
+                    data['snapshot_url'] = snapshot_url
                 url = "http://"+cia+":5104/motion/api/v1.0/motion_detected"
                 r = requests.post(url, json=data, timeout=5)
             except:

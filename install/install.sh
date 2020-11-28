@@ -24,15 +24,13 @@ cp nginx/uwsgi_params /nginx/uwsgi_params
 # RAMDISK="tmpfs  ${ROOT_DIR}/snapshot  tmpfs  rw,size=512M  0   0"
 # grep -qF "tmpfs" /etc/fstab || echo "${RAMDISK}" >> /etc/fstab
 timedatectl set-timezone ${TIMEZONE}
-echo "Install opencv, this will take some time"
-apt install libopencv-dev python3-opencv
-apt install ubuntu-desktop
+# echo "Install opencv, this will take some time"
+# apt install libopencv-dev python3-opencv
+# apt install ubuntu-desktop
 
 docker-compose build
-# docker-compose run gui python3 manage.py makemigrations
 docker-compose run gui python3 manage.py migrate
 docker-compose run gui python3 manage.py collectstatic
 docker-compose run gui python3 manage.py loaddata initial_data.json
-# docker-compose run gui python3 manage.py createsuperuser
 # docker-compose run gui python3 manage.py dumpdata --natural-primary --natural-foreign --indent 4 -e sessions -e admin -e contenttypes -e auth.Permission > initial_data.json
 echo "Installation finished, reboot now the system"

@@ -34,14 +34,14 @@ class CameraSerializer(serializers.ModelSerializer):
     # id = serializers.Field()
     class Meta:
         model = Camera
-        fields = ['id', 'name', 'ip_address', 'brand', 'user', 'password']
+        fields = ['id', 'name', 'host', 'brand', 'user', 'password', 'snapshot_url']
 
 class RecordingSerializer(serializers.ModelSerializer):
     # camera = CameraSerializer()
     
     class Meta:
         model = Recording
-        fields = ['camera', 'video_processed_by_analytics']
+        fields = ['camera', 'recording_date_time', 'file_path_video', 'file_path_snapshot', 'video_processed_by_analytics']
 
 class CameraTypeViewSet(viewsets.ModelViewSet):
     queryset = CameraType.objects.all()
@@ -72,6 +72,6 @@ router.register(r'recordings', CameraRecordingViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include(router.urls)),
+    path('rest/', include(router.urls)),
     path('api-auth/', include('rest_framework.urls'))
 ]

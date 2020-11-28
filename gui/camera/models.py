@@ -1,11 +1,24 @@
 import pytz
+from datetime import datetime
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.db import models
 from person.models import Person
 from timezone_field import TimeZoneField
 import requests
+from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
+
+def validate_not_underscore(value):
+    if '_' in value:
+        raise ValidationError(
+            _('%(value)s contains underscore(s), this is not allowed'),
+            params={'value': value},
+        )
+
+isalphavalidator = RegexValidator(r'[A-z0-9]+', message='name must be alphanumeric', code='Invalid name')
 
 valid = set('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789')
 def test_camera_name(s):
@@ -37,9 +50,8 @@ class CameraType(models.Model):
         return self.name
     
 class Camera(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-    ip_address = models.GenericIPAddressField(blank=True, null=True)
-    hostname = models.CharField(max_length=255, blank=True)
+    name = models.CharField(max_length=255, validators=[validate_not_underscore], unique=True)
+    host = models.GenericIPAddressField(blank=True, null=True)
     user = models.CharField(max_length=255, blank=True)
     password = models.CharField(max_length=255, blank=True)
     services = models.ManyToManyField(CameraServices, blank=True)
@@ -62,11 +74,11 @@ class Camera(models.Model):
 
 @receiver(pre_save, sender=Camera)
 def camera_db_changed(sender, instance, *args, **kwargs):
-    if not test_camera_name(instance.name):
-        raise Exception("No underscore allowed in the name")
+    # if not test_camera_name(instance.name):
+    #    raise Exception("No underscore allowed in the name")
     payload = {
         "name": instance.name, 
-        "ip_address": instance.ip_address,
+        "host": instance.host,
         "user": instance.user,
         "password": instance.password,
         "brand": instance.brand.brand.name,
@@ -101,11 +113,15 @@ class Recording(models.Model):
     camera = models.ForeignKey('Camera', on_delete=models.CASCADE)
     file_path_video = models.CharField(max_length=512, blank=True)
     file_path_snapshot = models.CharField(max_length=512, blank=True)
-    recording_date_time = models.DateTimeField(blank=True, null=True) # start of the recording
+    recording_date_time = models.DateTimeField(default=datetime.now()) # start of the recording
     duration = models.FloatField(blank=True, null=True, help_text="duration of recording in seconds")
     nbr_frames = models.IntegerField(blank=True, null=True, help_text="number of video frames")
     resolution = models.CharField(blank=True, max_length=64)
     video_processed_by_analytics = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.file_path_video
+
 '''
 FEATURE_CHOICES = [
     ('face_front', 'face_front'),

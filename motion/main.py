@@ -23,6 +23,8 @@ def handle_shape_requests():
         if shape_request:
             try:
                 data = {"camera_name": shape_request['camera_name'], "file": '/root'+shape_request['file']}
+                if 'snapshot_url' in shape_request:
+                    data['snapshot_url'] = shape_request['snapshot_url']
                 url = "http://"+cia+":5103/shape/api/v1.0/find_shape"
                 print("find shape url", url)
                 r = requests.post(url, json=data, timeout=5)
@@ -40,6 +42,7 @@ class MotionDetected(Resource):
         self.reqparse.add_argument('camera_name', type = str, required = True, location = 'json')
         self.reqparse.add_argument('file', type = str, required = False, location = 'json')
         self.reqparse.add_argument('type', type = str, required = True, location = 'json')
+        self.reqparse.add_argument('snapshot_url', type = str, required = False, location = 'json')
         super(MotionDetected, self).__init__()
 
     def post(self):

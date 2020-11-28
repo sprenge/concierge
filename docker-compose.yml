@@ -18,13 +18,15 @@ services:
     restart: always
 
   nginx:
-      image: nginx:1.13
-      ports:
-        - "8000:8000"
-      volumes:
-        - /nginx/conf:/etc/nginx/conf.d
-        - /nginx/uwsgi_params:/etc/nginx/uwsgi_params
-        - ${ROOT_DIR}/static:/static
+    image: nginx:1.13
+    ports:
+      - "8000:8000"
+    volumes:
+      - /nginx/conf:/etc/nginx/conf.d
+      - /nginx/uwsgi_params:/etc/nginx/uwsgi_params
+      - ${ROOT_DIR}/static:/static
+    environment:
+      - TZ=$TIMEZONE
 
   gui:
       build: ./gui
@@ -60,6 +62,7 @@ services:
       args:
         - FLASK=$VERSION_FLASK
         - FLASK_RESTFUL=$VERSION_FLASK_RESTFUL
+        - TIMEZONE=$TIMEZONE
     ports:
       - "5103:5103"
     environment:

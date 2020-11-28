@@ -35,13 +35,20 @@ class NewRecording(Resource):
             file_extension = file_extension.replace('.', '')
             if file_extension in ['jpg', 'mp4']:
                 try:
-                    url = "http://"+cia+":8000/cameras/"
+                    url = "http://"+cia+":8000/rest/cameras/"
                     r = requests.get(url)
                     if r.status_code == 200:
                         for camera in r.json():
                             if camera['name'] == cam_name:
                                 if camera['brand']['brand']['name'] == 'Reolink':
                                     ret_json = {'camera_name': cam_name, 'type': file_extension}
-                except:
-                    pass
+                                    if file_extension == 'mp4':
+                                        # create a recording record
+                                        data = {"camera": camera['id']}
+                                        data['file_path_video'] = args['file']
+                                        data['file_path_snapshot'] = args['file'].replace(".mp4", '.jpg')
+                                        url = "http://"+cia+":8000/rest/recordings/"
+                                        r = requests.post(url, json=data, timeout=10)
+                except Exception as e:
+                    print(e)
         return ret_json, 201

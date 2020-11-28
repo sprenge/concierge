@@ -1,6 +1,7 @@
 FROM ubuntu:20.04
 ARG FLASK
 ARG FLASK_RESTFUL
+ARG TIMEZONE
 
 RUN apt-get update
 RUN apt-get -y upgrade
@@ -19,6 +20,7 @@ RUN pip3 install face-recognition-models==0.3.0
 COPY ./detect_shape /
 
 # startup
+RUN ln -snf /usr/share/zoneinfo/$TIMEZONE /etc/localtime && echo $TIMEZONE > /etc/timezone
 CMD python3 -u main.py
 
 EXPOSE 5103

@@ -1,4 +1,5 @@
 import os
+import time
 import threading
 import requests
 from flask import Flask, jsonify
@@ -51,6 +52,7 @@ class FindShape(Resource):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('camera_name', type = str, required = True, location = 'json')
         self.reqparse.add_argument('file', type = str, required = False, location = 'json')
+        self.reqparse.add_argument('snapshot_url', type = str, required = False, location = 'json')
         super(FindShape, self).__init__()
 
     def post(self):
@@ -59,10 +61,13 @@ class FindShape(Resource):
         Supports two file formats (file suffixes) : jpg and mp4
         '''
         args = self.reqparse.parse_args()
+        st = time.time()
+        print(args)
         # quick motion check on single image of the motion clip
         cap = cv2.VideoCapture(args['file'])
         ret, frame = cap.read()
         find_shape(frame)
+        print("detection time", time.time()-st)
         return {}, 201
 
 # bind resource for REST API service

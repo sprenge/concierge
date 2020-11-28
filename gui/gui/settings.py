@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'rest_framework',
     'timezone_field',
+    'django_filters',
 ]
 
 MIDDLEWARE = [

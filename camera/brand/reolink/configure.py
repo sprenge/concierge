@@ -5,12 +5,12 @@ from login import httpLogin
 
 
 class Osd:
-    def __init__(self, token, ip_address):
+    def __init__(self, token, host):
         self.token = token
-        self.ip_address = ip_address
+        self.host = host
 
     def get_data(self):
-        url = "http://"+self.ip_address+"/api.cgi?cmd=GetOsd&token="+self.token
+        url = "http://"+self.host+"/api.cgi?cmd=GetOsd&token="+self.token
         payload = [{"cmd":"GetOsd","action":1,"param":{"channel":0}}]
         try:
             r = requests.post(url, json=payload)
@@ -25,7 +25,7 @@ class Osd:
         return ret_data
 
     def put_data(self, new_data):
-        url = "http://"+self.ip_address+"/api.cgi?cmd=SetOsd&token="+self.token
+        url = "http://"+self.host+"/api.cgi?cmd=SetOsd&token="+self.token
         new_payload = [
             {"cmd":"SetOsd","action":0,"param":
                 {"Osd":
@@ -44,12 +44,12 @@ class Osd:
         return False
 
 class SystemGeneral:
-    def __init__(self, token, ip_address):
+    def __init__(self, token, host):
         self.token = token
-        self.ip_address = ip_address
+        self.host = host
 
     def put_data(self, new_data):
-        url = "http://"+self.ip_address+"/api.cgi?token="+self.token
+        url = "http://"+self.host+"/api.cgi?token="+self.token
         new_payload = [
             {"cmd":"SetTime","action":0,"param":
                 {"Time":
