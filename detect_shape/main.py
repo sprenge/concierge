@@ -1,4 +1,5 @@
 import os
+import logging
 import time
 import threading
 import requests
@@ -6,6 +7,16 @@ from flask import Flask, jsonify
 from flask_restful import Resource, Api, reqparse
 import cv2
 import numpy as np
+import face_recognition
+
+# setup logging
+try:
+    log_level = os.environ['LOG_LEVEL']
+except:
+    log_level = "DEBUG"
+FORMAT = '%(levelname)s %(message)s'
+logging.basicConfig(format=FORMAT, level=getattr(logging, log_level))
+log = logging.getLogger()
 
 pt = './pi-object-detection/MobileNetSSD_deploy.prototxt.txt'
 ca = './pi-object-detection/MobileNetSSD_deploy.caffemodel'
@@ -19,7 +30,8 @@ app = Flask(__name__)
 api = Api(app)
 cf = 0.6
 
-def find_shape(image):
+def find_shape(image, frame_nbr=0):
+    shape_list = []
     net = cv2.dnn.readNetFromCaffe(pt, ca)
 
     (h, w) = image.shape[:2]
@@ -41,8 +53,19 @@ def find_shape(image):
             idx = int(detections[0, 0, i, 1])
             box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
             (startX, startY, endX, endY) = box.astype("int")
-            print("detected shape", CLASSES[idx], confidence * 100)
-            print("position", startX, startY, endX, endY)
+            adict = {'shape': CLASSES[idx], 'confidence': confidence * 100}
+            pos = {"startX": int(startX), "startY": int(startY), "endX": int(endX), "endY": int(endY)}
+            adict["box"] = pos
+            adict["frame_nbr"] = frame_nbr
+            adict['faces'] = []
+            if CLASSES[idx] == 'person':
+                rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                boxes = face_recognition.face_locations(rgb, model="hog")
+                for top, right, bottom, left in boxes:
+                    face = {"top": int(top), 'right': int(right), 'bottom': int(bottom), 'left': int(left)}
+                    adict['faces'].append(face)
+            shape_list.append(adict)
+    return shape_list
 
 class FindShape(Resource):
     '''
@@ -52,7 +75,7 @@ class FindShape(Resource):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('camera_name', type = str, required = True, location = 'json')
         self.reqparse.add_argument('file', type = str, required = False, location = 'json')
-        self.reqparse.add_argument('snapshot_url', type = str, required = False, location = 'json')
+        self.reqparse.add_argument('type', type = str, required = False, location = 'json')
         super(FindShape, self).__init__()
 
     def post(self):
@@ -62,13 +85,34 @@ class FindShape(Resource):
         '''
         args = self.reqparse.parse_args()
         st = time.time()
-        print(args)
-        # quick motion check on single image of the motion clip
+        shape_list = []
+
         cap = cv2.VideoCapture(args['file'])
-        ret, frame = cap.read()
-        find_shape(frame)
-        print("detection time", time.time()-st)
-        return {}, 201
+        if args['type'] == "jpg":
+            ret, frame = cap.read()
+            shape_list = find_shape(frame, frame_nbr=0)
+
+        if args['type'] == 'mp4':
+            ret = 1
+            frame_nbr = 0
+            skip_f = 5
+            skip_c = skip_f
+            while ret:
+                ret, frame = cap.read()
+                if ret:
+                    if skip_c == 0:
+                        log.debug("find shape for frame %s", frame_nbr)
+                        fsl = find_shape(frame, frame_nbr)
+                        shape_list.extend(fsl)
+                        skip_c = skip_f
+                    else:
+                        skip_c = skip_c - 1
+                    frame_nbr += 1
+
+        log.debug("find shape processing %s", time.time()-st)
+        if shape_list:
+            log.debug("find shape request %s", shape_list)
+        return shape_list, 201
 
 # bind resource for REST API service
 api.add_resource(FindShape, '/shape/api/v1.0/find_shape', endpoint = 'find_shape')
@@ -78,5 +122,11 @@ try:
     cia = os.environ['CONCIERGE_IP_ADDRESS']
 except:
     cia = '127.0.0.1'
+log.info("CONCIERGE_IP_ADDRESS %s", cia)
 
-app.run(host="0.0.0.0", port=5103)
+try:
+    lport = int(os.environ['PORT_DETECT_SHAPE'])
+except:
+    lport = 5103
+
+app.run(host="0.0.0.0", port=lport)

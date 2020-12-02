@@ -1,3 +1,10 @@
+'''
+Configure the camera if a reolink camera is added/changed into the database :
+- Configure OSD : Camera name
+- Timezone
+- ftp : Specify the location where reolink should ftp its recordings
+- Return live URL's to the caller
+'''
 import os
 import time
 import sys

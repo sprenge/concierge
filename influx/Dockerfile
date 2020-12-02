@@ -21,6 +21,5 @@ ENV PRE_CREATE_DB concierge
 
 # HTTP API
 EXPOSE 8086
-EXPOSE 8083
 
 CMD ["/run.sh"]

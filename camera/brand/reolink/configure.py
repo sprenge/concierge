@@ -1,3 +1,6 @@
+'''
+Send (put_data) and receive (get_data) configuration data to Reolink cameras.
+'''
 import json
 import os
 import requests

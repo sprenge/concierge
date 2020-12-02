@@ -1,3 +1,6 @@
+'''
+Authenticate to Reolink cameras and receive a token for further configuration requests (get and put)
+'''
 import json
 import requests
 

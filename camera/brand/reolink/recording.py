@@ -1,6 +1,13 @@
+'''
+Triggered when an asset is received as a result of camera motion :
+The camera name (deduced from the filename) is returned when the camera is found is the camera
+  database and is of type reolink and recording record is add into the database for mp4 files. 
+'''
 import os
 import time
 import sys
+import re
+import datetime
 import requests
 from flask import Flask, jsonify
 from flask_restful import Resource, Api, reqparse
@@ -9,6 +16,20 @@ try:
     cia = os.environ['CONCIERGE_IP_ADDRESS']
 except:
     cia = '127.0.0.1'
+
+def parse_date_time(dt):
+    match = re.match("(\d\d\d\d)(\d\d)(\d\d)(\d\d)(\d\d)(\d\d).*", dt)
+    epoch_time = 0
+    if match:
+        epoch_time = datetime.datetime(
+            int(match.group(1)),
+            int(match.group(2)),
+            int(match.group(3)),
+            int(match.group(4)),
+            int(match.group(5)),
+            int(match.group(6)),
+        ).timestamp()
+    return int(epoch_time)
 
 class NewRecording(Resource):
     '''
@@ -41,7 +62,13 @@ class NewRecording(Resource):
                         for camera in r.json():
                             if camera['name'] == cam_name:
                                 if camera['brand']['brand']['name'] == 'Reolink':
-                                    ret_json = {'camera_name': cam_name, 'type': file_extension}
+                                    date_time = file_name_parts[2]
+
+                                    ret_json = {
+                                        'camera_name': cam_name, 
+                                        'type': file_extension,
+                                        'epoch': parse_date_time(date_time)
+                                    }
                                     if file_extension == 'mp4':
                                         # create a recording record
                                         data = {"camera": camera['id']}
@@ -52,3 +79,7 @@ class NewRecording(Resource):
                 except Exception as e:
                     print(e)
         return ret_json, 201
+
+if __name__ == '__main__':
+    date_time = "20201201202416.jpg"
+    print(parse_date_time(date_time))

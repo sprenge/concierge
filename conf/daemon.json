@@ -1,0 +1,7 @@
+{
+  "log-driver": "syslog",
+  "log-opts": {
+    "syslog-address": "udp://{{host}}:514",
+    "tag": "{{.Name}}"
+  }
+}

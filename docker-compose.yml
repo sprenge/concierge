@@ -7,6 +7,8 @@ services:
       args:
         - FLASK=$VERSION_FLASK
         - FLASK_RESTFUL=$VERSION_FLASK_RESTFUL
+        - REQUESTS=$VERSION_REQUESTS
+        - TIMEZONE=$TIMEZONE
     ports:
       - "21:21"
       - "5101:5101"
@@ -27,20 +29,22 @@ services:
       - ${ROOT_DIR}/static:/static
     environment:
       - TZ=$TIMEZONE
+    restart: always
 
   gui:
-      build: ./gui
-      command: uwsgi --threads 8 --processes 8 --socket :8001 --module gui.wsgi --py-autoreload 1 --logto /tmp/mylog.log
-      ports:
+    build: ./gui
+    command: uwsgi --threads 8 --processes 8 --socket :8001 --module gui.wsgi --py-autoreload 1 --logto /tmp/mylog.log
+    ports:
       - "8001:8001"
-      volumes:
-        - ./gui:/code
-        - ${ROOT_DIR}/static:/static
-        - ${ROOT_DIR}:/root
-      expose:
-        - "8001"
-      environment:
-        - TIMEZONE
+    volumes:
+      - ./gui:/code
+      - ${ROOT_DIR}/static:/static
+      - ${ROOT_DIR}:/root
+    expose:
+      - "8001"
+    environment:
+      - TIMEZONE
+    restart: always
 
   reolink:
     build:
@@ -49,13 +53,15 @@ services:
       args:
         - FLASK=$VERSION_FLASK
         - FLASK_RESTFUL=$VERSION_FLASK_RESTFUL
+        - REQUESTS=$VERSION_REQUESTS
+        - TIMEZONE=$TIMEZONE
     ports:
       - "5102:5102"
     environment:
       - CONCIERGE_IP_ADDRESS
     restart: always
 
-  detect_shape:
+  detect_shape_snapshot:
     build:
       context: .
       dockerfile: ./detect_shape/Dockerfile
@@ -63,10 +69,30 @@ services:
         - FLASK=$VERSION_FLASK
         - FLASK_RESTFUL=$VERSION_FLASK_RESTFUL
         - TIMEZONE=$TIMEZONE
+        - REQUESTS=$VERSION_REQUESTS
     ports:
-      - "5103:5103"
+      - "${PORT_DETECT_SHAPE_SNAPSHOT}:${PORT_DETECT_SHAPE_SNAPSHOT}"
     environment:
       - CONCIERGE_IP_ADDRESS
+      - PORT_DETECT_SHAPE=${PORT_DETECT_SHAPE_SNAPSHOT}
+    volumes:
+      - /${ROOT_DIR}:/root
+    restart: always
+
+  detect_shape_video:
+    build:
+      context: .
+      dockerfile: ./detect_shape/Dockerfile
+      args:
+        - FLASK=$VERSION_FLASK
+        - FLASK_RESTFUL=$VERSION_FLASK_RESTFUL
+        - TIMEZONE=$TIMEZONE
+        - REQUESTS=$VERSION_REQUESTS
+    ports:
+      - "${PORT_DETECT_SHAPE_VIDEO}:${PORT_DETECT_SHAPE_VIDEO}"
+    environment:
+      - CONCIERGE_IP_ADDRESS
+      - PORT_DETECT_SHAPE=${PORT_DETECT_SHAPE_VIDEO}
     volumes:
       - /${ROOT_DIR}:/root
     restart: always
@@ -84,3 +110,29 @@ services:
       - CONCIERGE_IP_ADDRESS
       - ROOT_DIR
     restart: always
+
+  influx:
+    build:
+      context: .
+      dockerfile: ./influx/Dockerfile
+      args:
+        - FLASK=$VERSION_FLASK
+        - FLASK_RESTFUL=$VERSION_FLASK_RESTFUL
+    ports:
+      - "8086:8086"
+    environment:
+      - CONCIERGE_IP_ADDRESS
+    volumes:
+      - /camera/influx:/data
+      - /camera/influx:/var/lib/influx
+    restart: always
+
+  grafana:
+    image: grafana/grafana:7.3.0
+    ports:
+      - "3000:3000"
+    restart: always
+
+networks:
+  cinternal:
+    internal: true

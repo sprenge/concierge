@@ -10,6 +10,7 @@ RUN pip3 install Flask
 RUN pip3 install Flask-RESTful==${FLASK_RESTFUL}
 	
 COPY ./motion/main.py /
+COPY ./motion/influxdb.py /
 
 # startup
 CMD python3 -u main.py

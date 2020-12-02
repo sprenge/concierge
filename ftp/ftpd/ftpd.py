@@ -1,5 +1,6 @@
 import os
 import re
+import logging
 import threading
 from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler
@@ -7,6 +8,15 @@ from pyftpdlib.servers import FTPServer
 import requests
 from flask import Flask, jsonify
 from flask_restful import Resource, Api, reqparse
+
+# setup logging
+try:
+    log_level = os.environ['LOG_LEVEL']
+except:
+    log_level = "DEBUG"
+FORMAT = '%(levelname)s %(message)s'
+logging.basicConfig(format=FORMAT, level=getattr(logging, log_level))
+log = logging.getLogger()
 
 clients = [] # list of endpoint to trigger
 app = Flask(__name__)
@@ -43,7 +53,7 @@ try:
     cia = os.environ['CONCIERGE_IP_ADDRESS']
 except:
     cia = '127.0.0.1'
-print("sending ip address : ", cia)
+log.info("cia %s", cia)
 
 class myFTPHandler(FTPHandler):
     def on_file_received(self, file):
@@ -52,29 +62,50 @@ class myFTPHandler(FTPHandler):
             file  = match.group(1)
         data = {"file": file}
         camera_name = ''
-        snapshot_url = None
         file_type = ''
+        epoch = ''
         for url in clients:
-            print("url", url)
+            log.debug("send post request to ftp hook %s", url)
             try:
                 r = requests.post(url, json=data, timeout=3)
                 if r.status_code == 201:
                     ret_data = r.json()
                     if 'camera_name' in ret_data:
+                        # camera is recognized by the ftp hook
                         camera_name = ret_data['camera_name']
                     if 'type' in ret_data:
                         file_type = ret_data['type']
+                    if 'epoch' in ret_data:
+                        epoch = ret_data['epoch']
             except Exception as e:
-                print(e)
+                log.error("%s", e)
         
         # Trigger the motion service based on the presence of a jpeg
-        # TBC : Is this reolink specific ???
+        # which means that type field is filled in with jgp
         if file_type == 'jpg':
             try:
-                data = {'file': file, 'type': file_type, 'camera_name': camera_name}
-                if snapshot_url:
-                    data['snapshot_url'] = snapshot_url
+                data = {
+                    'file': file, 
+                    'type': file_type, 
+                    'camera_name': camera_name,
+                    'epoch' : epoch
+                }
                 url = "http://"+cia+":5104/motion/api/v1.0/motion_detected"
+                r = requests.post(url, json=data, timeout=5)
+            except:
+                pass
+
+        # Trigger the motion service with the message that the recording is ready
+        # and has been received
+        if file_type == 'mp4':
+            try:
+                data = {
+                    'file': file, 
+                    'type': file_type, 
+                    'camera_name': camera_name,
+                    'epoch': epoch
+                }
+                url = "http://"+cia+":5104/motion/api/v1.0/recording_ready"
                 r = requests.post(url, json=data, timeout=5)
             except:
                 pass
