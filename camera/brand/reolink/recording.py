@@ -29,6 +29,7 @@ def parse_date_time(dt):
             int(match.group(5)),
             int(match.group(6)),
         ).timestamp()
+    epoch_time = int(epoch_time) + time.timezone
     return int(epoch_time)
 
 class NewRecording(Resource):
@@ -71,8 +72,11 @@ class NewRecording(Resource):
                                     }
                                     if file_extension == 'mp4':
                                         # create a recording record
+                                        dt = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(ret_json['epoch']-time.timezone))
+                                        print("dt", dt)
                                         data = {"camera": camera['id']}
                                         data['file_path_video'] = args['file']
+                                        data['recording_date_time'] = dt
                                         data['file_path_snapshot'] = args['file'].replace(".mp4", '.jpg')
                                         url = "http://"+cia+":8000/rest/recordings/"
                                         r = requests.post(url, json=data, timeout=10)

@@ -115,16 +115,13 @@ services:
     build:
       context: .
       dockerfile: ./influx/Dockerfile
-      args:
-        - FLASK=$VERSION_FLASK
-        - FLASK_RESTFUL=$VERSION_FLASK_RESTFUL
     ports:
       - "8086:8086"
     environment:
       - CONCIERGE_IP_ADDRESS
     volumes:
-      - /camera/influx:/data
-      - /camera/influx:/var/lib/influx
+      - /camera/influx/data1:/data
+      - /camera/influx/data2:/var/lib/influxdb
     restart: always
 
   grafana:

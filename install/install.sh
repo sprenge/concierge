@@ -31,7 +31,8 @@ mkdir -p $ROOT_DIR
 mkdir -p "${ROOT_DIR}/static"
 mkdir -p "${ROOT_DIR}/static/recordings"
 mkdir -p "${ROOT_DIR}/snapshot"
-mkdir -p "${ROOT_DIR}/influx"
+mkdir -p "${ROOT_DIR}/influx/data1"
+mkdir -p "${ROOT_DIR}/influx/data2"
 mkdir -p /nginx/conf
 cp nginx/app_nginx.conf /nginx/conf/app_nginx.conf
 cp nginx/uwsgi_params /nginx/uwsgi_params

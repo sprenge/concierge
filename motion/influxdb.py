@@ -5,13 +5,11 @@ import requests
 
 url_string = 'http://{}:{}/write?db={}'
 
-def summarize_analytic_data(data, recording_path, asset_type='image', motion=False):
+def summarize_analytic_data(data, recording_path, asset_type='image'):
     '''
     Transform data from shape detect to summary data in order to feed it influx db
     '''
     new_data = {'asset_type': asset_type, 'recording_path': recording_path}
-    if motion:
-        new_data['detect_motion'] = 1
     nbr_rec = 0
     for rec in data:
         if 'shape' in rec:
@@ -27,8 +25,6 @@ def summarize_analytic_data(data, recording_path, asset_type='image', motion=Fal
                 else:
                     new_data['detect_face'] += 1
         nbr_rec += 1
-    if nbr_rec == 0 and not motion: 
-        return {}
     return new_data
 
 

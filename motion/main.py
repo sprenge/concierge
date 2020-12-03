@@ -41,7 +41,10 @@ def handle_shape_requests_jpg():
                 url = "http://"+cia+":5103/shape/api/v1.0/find_shape"
                 r = requests.post(url, json=data, timeout=30)
                 if r.status_code == 201:
-                    summary_data = influxdb.summarize_analytic_data(r.json(), 'http://'+cia+':8000'+shape_request['file'], asset_type='image', motion=True)
+                    summary_data = influxdb.summarize_analytic_data(
+                        r.json(), 
+                        'http://'+cia+':8000'+shape_request['file'], 
+                        asset_type='image')
                     if summary_data:
                         influxdb.send_recording_to_influx_db(cia, shape_request['camera_name'], summary_data, int(shape_request['epoch']))
                 else:
@@ -67,7 +70,10 @@ def handle_shape_requests_mp4():
                 url = "http://"+cia+":5105/shape/api/v1.0/find_shape"
                 r = requests.post(url, json=data, timeout=1200)
                 if r.status_code == 201:
-                    summary_data = influxdb.summarize_analytic_data(r.json(), 'http://'+cia+':8000'+shape_request['file'], asset_type='video')
+                    summary_data = influxdb.summarize_analytic_data(
+                        r.json(), 
+                        'http://'+cia+':8000'+shape_request['file'], 
+                        asset_type='video')
                     if summary_data:
                         influxdb.send_recording_to_influx_db(cia, shape_request['camera_name'], summary_data, int(shape_request['epoch']))
                 else:
