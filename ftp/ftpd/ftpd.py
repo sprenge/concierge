@@ -8,6 +8,7 @@ from pyftpdlib.servers import FTPServer
 import requests
 from flask import Flask, jsonify
 from flask_restful import Resource, Api, reqparse
+from PIL import Image
 
 # setup logging
 try:
@@ -18,45 +19,47 @@ FORMAT = '%(levelname)s %(message)s'
 logging.basicConfig(format=FORMAT, level=getattr(logging, log_level))
 log = logging.getLogger()
 
-clients = [] # list of endpoint to trigger
 app = Flask(__name__)
 api = Api(app)
 
-class NewClient(Resource):
+def make_thumbnail(p):
     '''
-    REST API class for creation/deletion of video stream on a (part of the) screen of the raspberry.
-    Create is done one by one
-    Delete removes ALL video streams at once
+    Create thumbnail for still image"
     '''
-    def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('url', type = str, required = True, location = 'json')
-        super(NewClient, self).__init__()
-
-    def post(self):
-        '''
-        Creates a video stream on a part of the screen
-        '''
-        args = self.reqparse.parse_args()
-        clients.append(args['url'])
-        print(clients)
-        return {}, 201
-
-# bind resource for REST API service
-api.add_resource(NewClient, '/ftp/api/v1.0/registerclient', endpoint = 'registerclient')
-
-
-def register_clients():
-    app.run(host="0.0.0.0", port=5101)
+    basewidth = 200
+    try:
+        img = Image.open(p)
+        wpercent = (basewidth/float(img.size[0]))
+        hsize = int((float(img.size[1])*float(wpercent)))
+        img = img.resize((basewidth,hsize), Image.ANTIALIAS)
+        pre, ext = os.path.splitext(p)
+        img.save(pre + '.gif')
+    except Exception as e:
+        log.error(e)
 
 try:
     cia = os.environ['CONCIERGE_IP_ADDRESS']
 except:
     cia = '127.0.0.1'
-log.info("cia %s", cia)
+
+def get_registered_clients():
+    clients = []
+    try:
+        r = requests.get("http://"+cia+":80/rest/camera_listeners/", timeout=5)
+        if r.status_code == 200:
+            for rec in r.json():
+                if rec['callback_type'] == 'ftp':
+                    print('found ftp client', rec['url'])
+                    clients.append(rec['url'])
+        else:
+            log.error("camera_listeners error {}".format(r.status_code))
+    except Exception as e:
+        log.error(str(e))
+    return clients
 
 class myFTPHandler(FTPHandler):
     def on_file_received(self, file):
+        # file received from camera via ftp
         match = re.match("^/root(.*)", file)
         if match:
             file  = match.group(1)
@@ -64,6 +67,7 @@ class myFTPHandler(FTPHandler):
         camera_name = ''
         file_type = ''
         epoch = ''
+        clients = get_registered_clients()
         for url in clients:
             log.debug("send post request to ftp hook %s", url)
             try:
@@ -83,6 +87,8 @@ class myFTPHandler(FTPHandler):
         # Trigger the motion service based on the presence of a jpeg
         # which means that type field is filled in with jgp
         if file_type == 'jpg':
+            print("espr", file)
+            make_thumbnail('/root'+file)
             try:
                 data = {
                     'file': file, 
@@ -119,8 +125,6 @@ handler = myFTPHandler
 handler.authorizer = authorizer
 handler.passive_ports = range(30000, 30009)
 
-register_client_t = threading.Thread(target=register_clients, args=())
-register_client_t.start()
 server = FTPServer(("0.0.0.0", 21), handler)
 server.max_cons = 256
 server.max_cons_per_ip = 5

@@ -29,6 +29,7 @@ def handle_shape_requests_jpg():
         shape_request = None
         lock.acquire()
         if len(shape_request_list_jpg) > 0:
+            # take the next analytics request from the queue
             shape_request = shape_request_list_jpg.pop(0)
         lock.release()
         if shape_request:
@@ -43,7 +44,7 @@ def handle_shape_requests_jpg():
                 if r.status_code == 201:
                     summary_data = influxdb.summarize_analytic_data(
                         r.json(), 
-                        'http://'+cia+':8000'+shape_request['file'], 
+                        'http://'+cia+':80'+shape_request['file'], 
                         asset_type='image')
                     if summary_data:
                         influxdb.send_recording_to_influx_db(cia, shape_request['camera_name'], summary_data, int(shape_request['epoch']))
@@ -58,6 +59,7 @@ def handle_shape_requests_mp4():
         shape_request = None
         lock.acquire()
         if len(shape_request_list_mp4) > 0:
+            # take the next analytics request from the queue
             shape_request = shape_request_list_mp4.pop(0)
         lock.release()
         if shape_request:
@@ -72,7 +74,7 @@ def handle_shape_requests_mp4():
                 if r.status_code == 201:
                     summary_data = influxdb.summarize_analytic_data(
                         r.json(), 
-                        'http://'+cia+':8000'+shape_request['file'], 
+                        'http://'+cia+':80'+shape_request['file'], 
                         asset_type='video')
                     if summary_data:
                         influxdb.send_recording_to_influx_db(cia, shape_request['camera_name'], summary_data, int(shape_request['epoch']))
@@ -101,6 +103,7 @@ class MotionDetected(Resource):
         '''
         args = self.reqparse.parse_args()
         log.debug("motion triggered %s", args)
+        # append request to the list for further processing
         lock.acquire()
         shape_request_list_jpg.append(copy.deepcopy(args))
         lock.release()
@@ -144,12 +147,12 @@ try:
     cia = os.environ['CONCIERGE_IP_ADDRESS']
 except:
     cia = '127.0.0.1'
-print("sending ip address : ", cia)
 try:
     root_dir = os.environ['ROOT_DIR']
 except:
     root_dir = ''
 
+# offload triggers for shape detection to a seperate thread
 shape_handler_jpg = threading.Thread(target=handle_shape_requests_jpg, args=())
 shape_handler_jpg.start()
 shape_handler_mp4 = threading.Thread(target=handle_shape_requests_mp4, args=())

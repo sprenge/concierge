@@ -8,6 +8,7 @@ RUN apt-get update
 RUN apt-get -y upgrade
 RUN apt-get -y install python3-pip
 RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata
+RUN pip3 install Pillow
 RUN pip3 install pyftpdlib
 RUN pip3 install requests==${REQUESTS}
 RUN pip3 install Flask==${FLASK}

@@ -1,4 +1,5 @@
 #!/bin/bash
+echo "Package installation ongoing"
 apt-get install -y python3-pip
 apt-get install -y libssl-dev libmysqlclient-dev
 apt install -y python3-dev 
@@ -9,20 +10,10 @@ pip3 -v install docker-compose
 pip3 install -r /root/concierge/install/requirements.txt
 # tbc : install daemon and restart docker
 apt-get install -y syslog-ng
-pat="^source s_net.*"
-while read p; do
-   if [[ $p =~ $pat ]] ; then
-       echo "$p"
-   else
-       echo "source s_net { tcp(ip(0.0.0.0) port(514) max-connections (5000)); udp(); };" >> /etc/syslog-ng/syslog-ng.conf
-       echo "log { source(s_net); destination(d_syslog); };" >> /etc/syslog-ng/syslog-ng.conf
-       systemctl restart syslog-ng
-   fi
-done </etc/syslog-ng/syslog-ng.conf
-# add to /etc/syslog-ng/syslog-ng.conf
-# source s_net { tcp(ip(0.0.0.0) port(514) max-connections (5000)); udp(); };
-# log { source(s_net); destination(d_syslog); };
-# restart syslog-ng
+echo "source s_net { tcp(ip(0.0.0.0) port(514) max-connections (5000)); udp(); };" >> /etc/syslog-ng/syslog-ng.conf
+echo "log { source(s_net); destination(d_syslog); };" >> /etc/syslog-ng/syslog-ng.conf
+systemctl restart syslog-ng
+apt-get install -y influxdb-client
 if [ -f .env ]
 then
   set -o allexport; source .env; set +o allexport
@@ -44,8 +35,11 @@ cp nginx/uwsgi_params /nginx/uwsgi_params
 timedatectl set-timezone ${TIMEZONE}
 # echo "Install opencv, this will take some time"
 # apt install libopencv-dev python3-opencv
-# apt install ubuntu-desktop
+apt install ubuntu-desktop
+grep -qF "dtoverlay"  /boot/firmware/syscfg.txt|| echo "dtoverlay=vc4-fkms-v3d" >> /boot/firmware/syscfg.txt
+echo "Package installation finished"
 
+echo "Building now docker containers, this will take a lot time"
 docker-compose build
 docker-compose run gui python3 manage.py migrate
 docker-compose run gui python3 manage.py collectstatic

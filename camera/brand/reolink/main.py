@@ -37,8 +37,12 @@ if __name__ == '__main__':
     while (registration_not_done):
         try:
             # Register callback REST API for configuration request for Reolink camera's
-            r = requests.post("http://"+cia+":8000/rest/camera_listeners/", 
-                              json={"url": "http://"+cia+":5102/camera/api/v1.0/reoconfig", "description": "", "callback_type": 'config'}, 
+            r = requests.post("http://"+cia+":80/rest/camera_listeners/", 
+                              json={
+                                "url": "http://"+cia+":5102/camera/api/v1.0/reoconfig", 
+                                "description": "Config callback for Reolink camera's", 
+                                "callback_type": 'config'
+                                }, 
                               timeout=10)
             if r.status_code == 201 or r.status_code == 400:
                 registration_not_done = False
@@ -48,11 +52,15 @@ if __name__ == '__main__':
         time.sleep(5)
     registration_not_done = True
     while (registration_not_done):
+        '''
         try:
             # Register callback REST API when new recordings (.jpg and .mp4 file) are received via ftp
             # These recordings are assets generated as a result of motion detection
             r = requests.post("http://"+cia+":5101/ftp/api/v1.0/registerclient",
-                              json={"url": "http://"+cia+":5102/camera/api/v1.0/newrecording", "callback_type": 'config'},
+                              json={
+                                "url": "http://"+cia+":5102/camera/api/v1.0/newrecording", 
+                                "callback_type": 'config'
+                                },
                               timeout=10)
             if r.status_code == 201:
                 registration_not_done = False
@@ -60,5 +68,21 @@ if __name__ == '__main__':
         except Exception as e:
             log.error("%s", e)
         time.sleep(5)
+        '''
+        try:
+            # Register callback REST API for configuration request for Reolink camera's
+            r = requests.post("http://"+cia+":80/rest/camera_listeners/", 
+                              json={
+                                "url": "http://"+cia+":5102/camera/api/v1.0/newrecording", 
+                                "description": "Recording callback for Reolink camera's", 
+                                "callback_type": 'ftp'
+                                }, 
+                              timeout=10)
+            if r.status_code == 201 or r.status_code == 400:
+                registration_not_done = False
+            log.info("registration config status code %s", r.status_code)
+        except Exception as e:
+            log.error("%s", e)
+        time.sleep(5)    
     # Hand over control to Flask.  Flask will trigger the above REST API
     app.run(host="0.0.0.0", port=5102)

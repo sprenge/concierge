@@ -16,7 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers, serializers, viewsets
-from camera.models import Camera, CameraListeners, CameraBrand, CameraType, Recording
+from camera.models import Camera, CameraListeners, CameraBrand, CameraType, Recording, AnalyticsShapes, AnalyticsProfile
 
 class CameraBrandSerializer(serializers.ModelSerializer):
     class Meta:
@@ -34,14 +34,24 @@ class CameraSerializer(serializers.ModelSerializer):
     # id = serializers.Field()
     class Meta:
         model = Camera
-        fields = ['id', 'name', 'host', 'brand', 'user', 'password', 'snapshot_url']
+        fields = ['id', 'name', 'host', 'brand', 'user', 'password', 'snapshot_url', 'analytics_profile']
 
 class RecordingSerializer(serializers.ModelSerializer):
     # camera = CameraSerializer()
     
     class Meta:
         model = Recording
-        fields = ['camera', 'recording_date_time', 'file_path_video', 'file_path_snapshot', 'video_processed_by_analytics']
+        fields = ['camera', 'recording_date_time', 'file_path_video', 'file_path_snapshot', 'video_processed_by_analytics', 'url_thumbnail', 'url_video', 'url_snapshot']
+
+class AnalyticsShapesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AnalyticsShapes
+        fields = ['shape',]
+
+class AnalyticsProfilesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AnalyticsProfile
+        fields = ['id', 'name', 'shapes', 'min_nbr_video_frames_skipped', 'max_nbr_video_frames_skipped', 'confidence_level']
 
 class CameraTypeViewSet(viewsets.ModelViewSet):
     queryset = CameraType.objects.all()
@@ -64,11 +74,25 @@ class CameraRecordingViewSet(viewsets.ModelViewSet):
     queryset = Recording.objects.all()
     serializer_class = RecordingSerializer
 
+class CameraRecordingViewSet(viewsets.ModelViewSet):
+    queryset = Recording.objects.all()
+    serializer_class = RecordingSerializer
+
+class AnalyticsProfilesViewSet(viewsets.ModelViewSet):
+    queryset = AnalyticsProfile.objects.all()
+    serializer_class = AnalyticsProfilesSerializer
+
+class AnalyticsShapesViewSet(viewsets.ModelViewSet):
+    queryset = AnalyticsShapes.objects.all()
+    serializer_class = AnalyticsShapesSerializer
+
 router = routers.DefaultRouter()
 router.register(r'cameras', CameraViewSet)
 router.register(r'camera_listeners', CameraListenerViewSet)
 router.register(r'camera_types', CameraTypeViewSet)
 router.register(r'recordings', CameraRecordingViewSet)
+router.register(r'analytics_profiles', AnalyticsProfilesViewSet)
+router.register(r'analytics_shapes', AnalyticsShapesViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),

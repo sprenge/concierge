@@ -31,6 +31,7 @@ cd concierge
 chmod +x install/install.sh
 ./install.sh
 # be patient while concierge is installing
+reboot
 ```
 Make sure that your rasberry pi and cameras have a fixed IP address (most of the home routers/gateway foresee this feature)
 
@@ -49,3 +50,10 @@ docker-compose logs -f
 # stop concierge
 docker-compose down
 ```
+
+# Camera control
+
+Open a browser and navigate to the following URL : http://<concierge ip>/admin
+User / password : admin/12345678
+
+Only the django admin interface is currently forseen for configuring cameras and look at recordings, a more enhanced interface will be foreseen in the future.

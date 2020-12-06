@@ -17,12 +17,14 @@ services:
       - /${ROOT_DIR}:/root
     environment:
       - CONCIERGE_IP_ADDRESS
+    depends_on:
+      - gui
     restart: always
 
   nginx:
     image: nginx:1.13
     ports:
-      - "8000:8000"
+      - "80:8000"
     volumes:
       - /nginx/conf:/etc/nginx/conf.d
       - /nginx/uwsgi_params:/etc/nginx/uwsgi_params
@@ -44,6 +46,8 @@ services:
       - "8001"
     environment:
       - TIMEZONE
+    depends_on:
+      - nginx
     restart: always
 
   reolink:
@@ -59,6 +63,8 @@ services:
       - "5102:5102"
     environment:
       - CONCIERGE_IP_ADDRESS
+    depends_on:
+      - gui
     restart: always
 
   detect_shape_snapshot:

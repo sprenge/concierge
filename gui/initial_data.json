@@ -32,5 +32,227 @@
         "description": "",
         "brand": 1
     }
+},
+{
+    "model": "camera.analyticsshapes",
+    "pk": 1,
+    "fields": {
+        "shape": "background",
+        "description": ""
+    }
+},
+
+{
+    "model": "camera.analyticsshapes",
+    "pk": 2,
+    "fields": {
+        "shape": "aeroplane",
+        "description": ""
+    }
+},
+
+{
+    "model": "camera.analyticsshapes",
+    "pk": 3,
+    "fields": {
+        "shape": "bicycle",
+        "description": ""
+    }
+},
+
+{
+    "model": "camera.analyticsshapes",
+    "pk": 4,
+    "fields": {
+        "shape": "bird",
+        "description": ""
+    }
+},
+
+{
+    "model": "camera.analyticsshapes",
+    "pk": 5,
+    "fields": {
+        "shape": "boat",
+        "description": ""
+    }
+},
+
+{
+    "model": "camera.analyticsshapes",
+    "pk": 6,
+    "fields": {
+        "shape": "bottle",
+        "description": ""
+    }
+},
+
+{
+    "model": "camera.analyticsshapes",
+    "pk": 7,
+    "fields": {
+        "shape": "bus",
+        "description": ""
+    }
+},
+
+{
+    "model": "camera.analyticsshapes",
+    "pk": 8,
+    "fields": {
+        "shape": "car",
+        "description": ""
+    }
+},
+
+{
+    "model": "camera.analyticsshapes",
+    "pk": 9,
+    "fields": {
+        "shape": "cat",
+        "description": ""
+    }
+},
+
+{
+    "model": "camera.analyticsshapes",
+    "pk": 10,
+    "fields": {
+        "shape": "chair",
+        "description": ""
+    }
+},
+
+{
+    "model": "camera.analyticsshapes",
+    "pk": 11,
+    "fields": {
+        "shape": "cow",
+        "description": ""
+    }
+},
+
+{
+    "model": "camera.analyticsshapes",
+    "pk": 12,
+    "fields": {
+        "shape": "diningtable",
+        "description": ""
+    }
+},
+
+{
+    "model": "camera.analyticsshapes",
+    "pk": 13,
+    "fields": {
+        "shape": "dog",
+        "description": ""
+    }
+},
+
+{
+    "model": "camera.analyticsshapes",
+    "pk": 14,
+    "fields": {
+        "shape": "horse",
+        "description": ""
+    }
+},
+
+{
+    "model": "camera.analyticsshapes",
+    "pk": 15,
+    "fields": {
+        "shape": "motorbike",
+        "description": ""
+    }
+},
+
+{
+    "model": "camera.analyticsshapes",
+    "pk": 16,
+    "fields": {
+        "shape": "person",
+        "description": ""
+    }
+},
+
+{
+    "model": "camera.analyticsshapes",
+    "pk": 17,
+    "fields": {
+        "shape": "pottedplant",
+        "description": ""
+    }
+},
+
+{
+    "model": "camera.analyticsshapes",
+    "pk": 18,
+    "fields": {
+        "shape": "sheep",
+        "description": ""
+    }
+},
+
+{
+    "model": "camera.analyticsshapes",
+    "pk": 19,
+    "fields": {
+        "shape": "sofa",
+        "description": ""
+    }
+},
+
+{
+    "model": "camera.analyticsshapes",
+    "pk": 20,
+    "fields": {
+        "shape": "train",
+        "description": ""
+    }
+},
+
+{
+    "model": "camera.analyticsshapes",
+    "pk": 21,
+    "fields": {
+        "shape": "tvmonitor",
+        "description": ""
+    }
+},
+{
+    "model": "camera.analyticsprofile",
+    "pk": 1,
+    "fields": {
+        "name": "all_shapes",
+        "min_nbr_video_frames_skipped": 5,
+        "max_nbr_video_frames_skipped": 60,
+        "confidence_level": 70,
+        "shapes": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21
+        ]
+    }
 }
+
 ]

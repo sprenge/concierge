@@ -9,7 +9,14 @@ import requests
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.utils.safestring import mark_safe
 
+try:
+    cia = os.environ['CONCIERGE_IP_ADDRESS']
+except:
+    cia = '127.0.0.1'
+print("CONCIERGE_IP_ADDRESS gui %s", cia)
 
 def validate_not_underscore(value):
     if '_' in value:
@@ -23,10 +30,6 @@ isalphavalidator = RegexValidator(r'[A-z0-9]+', message='name must be alphanumer
 valid = set('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789')
 def test_camera_name(s):
     return set(s).issubset(valid)
-
-class CameraServices(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-    description = models.CharField(max_length=255, blank=True)
 
 class CameraBrand(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -54,7 +57,7 @@ class Camera(models.Model):
     host = models.GenericIPAddressField(blank=True, null=True)
     user = models.CharField(max_length=255, blank=True)
     password = models.CharField(max_length=255, blank=True)
-    services = models.ManyToManyField(CameraServices, blank=True)
+    analytics_profile = models.ForeignKey('AnalyticsProfile', blank=True, null=True, on_delete=models.CASCADE, related_name='analytics_profile_name')
     brand = models.ForeignKey('CameraType', on_delete=models.CASCADE, related_name="camera_type")
     timezone = TimeZoneField(default='Europe/Brussels')
     live_url_hd = models.CharField(max_length=512, blank=True)
@@ -113,26 +116,58 @@ class Recording(models.Model):
     camera = models.ForeignKey('Camera', on_delete=models.CASCADE)
     file_path_video = models.CharField(max_length=512, blank=True)
     file_path_snapshot = models.CharField(max_length=512, blank=True)
+    url_video = models.URLField(null=True, blank=True)
+    url_snapshot = models.URLField(null=True, blank=True)
+    url_thumbnail = models.URLField(null=True, blank=True)
     recording_date_time = models.DateTimeField(default=datetime.now()) # start of the recording
     duration = models.FloatField(blank=True, null=True, help_text="duration of recording in seconds")
     nbr_frames = models.IntegerField(blank=True, null=True, help_text="number of video frames")
     resolution = models.CharField(blank=True, max_length=64)
     video_processed_by_analytics = models.BooleanField(default=False)
 
+    @property
+    def full_video_path(self):
+        return "http://{}:80".format(cia)+self.file_path_video
+    
+    def image_img(self):
+        if self.url_thumbnail:
+            return mark_safe('<img class="thumbnail" src="{}" />'.format(self.url_thumbnail))
+        else:
+            return '(Sin imagen)'
+        image_img.short_description = 'Thumb'
+
+    def play_video(self):
+        if self.url_video:
+            return mark_safe('<video poster="{}" preload="none" width="200" controls autoplay><source src="{}" type="video/mp4"></source></video>'.format(self.url_thumbnail, self.url_video))
+        else:
+            return '(Sin imagen)'
+        play_video.short_description = 'Thumb'
+
+
+# <source src="{{ MEDIA_URL }}sample.mp4" type="video/mp4"></source>
     def __str__(self):
         return self.file_path_video
 
-'''
-FEATURE_CHOICES = [
-    ('face_front', 'face_front'),
-]
+class AnalyticsShapes(models.Model):
+    shape = models.CharField(max_length=128, unique=True)
+    description = models.CharField(max_length=255, blank=True)
 
-#class RecordingFeature(models.Model):
-    recording = models.ForeignKey('Recording', on_delete=models.CASCADE)
-    feature_type =  models.CharField(max_length=80, choices=FEATURE_CHOICES)
-    file_path = models.CharField(max_length=255)
-    confirmed = models.BooleanField(default=False)
-    used_for_training = models.BooleanField(default=False)
-    date_time  = models.DateTimeField()
-    person = models.ForeignKey(Person, blank=True, on_delete=models.CASCADE)
-'''
+    def __str__(self):
+        return self.shape
+
+class AnalyticsProfile(models.Model):
+    name = models.CharField(max_length=128, unique=True)
+    shapes = models.ManyToManyField('AnalyticsShapes', null=True, blank=True)
+    min_nbr_video_frames_skipped = models.IntegerField(default=5, help_text="minimum number of frames skipped during video analytics")
+    max_nbr_video_frames_skipped = models.IntegerField(default=60, help_text="maximum number of frames skipped during video analytics")
+    confidence_level = models.IntegerField(
+        default=70,
+        help_text = 'Confidence level on detect objects, increase if too many false positive are detected',
+        validators=[
+            MaxValueValidator(100),
+            MinValueValidator(1)
+        ]
+     )
+    def __str__(self):
+        return self.name
+
