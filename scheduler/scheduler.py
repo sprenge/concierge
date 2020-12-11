@@ -1,35 +1,33 @@
 import os
 import time
 import sys
-from flask import Flask, jsonify
-from flask_restful import Resource, Api, reqparse
+import logging
+import schedule
+from clean_recordings import clean
 
-app = Flask(__name__)
-api = Api(app)
+# setup logging
+try:
+    log_level = os.environ['LOG_LEVEL']
+except:
+    log_level = "DEBUG"
+FORMAT = '%(levelname)s %(message)s'
+logging.basicConfig(format=FORMAT, level=getattr(logging, log_level))
+log = logging.getLogger()
 
-class Scheduler(Resource):
-    '''
-    '''
-    def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('file', type = str, required = True, location = 'json')
-        super(Scheduler, self).__init__()
+try:
+    cia = os.environ['CONCIERGE_IP_ADDRESS']
+except:
+    cia = '127.0.0.1'
+try:
+    root_dir = os.environ['ROOT_DIR']
+except:
+    root_dir = ''
 
-    def post(self):
-        '''
-        Creates a video stream on a part of the screen
-        '''
-        args = self.reqparse.parse_args()
-        print(args['file'])
-        return {}, 201
+def recordings_cleaner():
+    clean(cia, log)
 
-    def delete(self):
-        '''
-        '''
-        return {}, 201
+schedule.every().hour.do(recordings_cleaner)
 
-# bind resource for REST API service
-api.add_resource(Scheduler, '/ftp/api/v1.0/files', endpoint = 'files')
-
-if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5100)
+while True:
+    schedule.run_pending()
+    time.sleep(1)

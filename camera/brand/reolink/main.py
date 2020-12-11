@@ -52,23 +52,6 @@ if __name__ == '__main__':
         time.sleep(5)
     registration_not_done = True
     while (registration_not_done):
-        '''
-        try:
-            # Register callback REST API when new recordings (.jpg and .mp4 file) are received via ftp
-            # These recordings are assets generated as a result of motion detection
-            r = requests.post("http://"+cia+":5101/ftp/api/v1.0/registerclient",
-                              json={
-                                "url": "http://"+cia+":5102/camera/api/v1.0/newrecording", 
-                                "callback_type": 'config'
-                                },
-                              timeout=10)
-            if r.status_code == 201:
-                registration_not_done = False
-            log.info("registration recording status code %s", r.status_code)
-        except Exception as e:
-            log.error("%s", e)
-        time.sleep(5)
-        '''
         try:
             # Register callback REST API for configuration request for Reolink camera's
             r = requests.post("http://"+cia+":80/rest/camera_listeners/", 

@@ -68,12 +68,12 @@ class NewRecording(Resource):
                                     ret_json = {
                                         'camera_name': cam_name, 
                                         'type': file_extension,
+                                        'analytics_profile': camera['analytics_profile'],
                                         'epoch': parse_date_time(date_time)
                                     }
                                     if file_extension == 'mp4':
                                         # create a recording record
                                         dt = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.localtime(ret_json['epoch']-time.timezone))
-                                        print("dt", dt)
                                         data = {"camera": camera['id']}
                                         data['file_path_video'] = args['file']
                                         data['recording_date_time'] = dt
@@ -87,6 +87,8 @@ class NewRecording(Resource):
                                             r = requests.post(url, json=data, timeout=10)
                                             if r.status_code != 201:
                                                 log.error("Create recording failed {}".format(r.status_code))
+                                            else:
+                                                ret_json['id'] = str(r.json()['id'])
                                         except Exception as e:
                                             log.error(str(e))
 

@@ -114,7 +114,7 @@ class CameraListeners(models.Model):
 
 class Recording(models.Model):
     camera = models.ForeignKey('Camera', on_delete=models.CASCADE)
-    file_path_video = models.CharField(max_length=512, blank=True)
+    file_path_video = models.CharField(max_length=512, unique=True)
     file_path_snapshot = models.CharField(max_length=512, blank=True)
     url_video = models.URLField(null=True, blank=True)
     url_snapshot = models.URLField(null=True, blank=True)
@@ -143,8 +143,6 @@ class Recording(models.Model):
             return '(Sin imagen)'
         play_video.short_description = 'Thumb'
 
-
-# <source src="{{ MEDIA_URL }}sample.mp4" type="video/mp4"></source>
     def __str__(self):
         return self.file_path_video
 
@@ -171,3 +169,16 @@ class AnalyticsProfile(models.Model):
     def __str__(self):
         return self.name
 
+
+'''
+class KnownObjects(models.Model):
+    name = models.CharField(max_length=256, blank=True)
+    file_path_image = models.CharField(max_length=512)
+    object_type = models.ForeignKey('AnalyticsShapes', null=True, blank=True)
+    identified = models.BooleanField(default=True, help_text="Set to False for instance if a person is not identified yet")
+    recording_id = models.CharField(max_length=256, blank=True)
+    frame_nbr = models.CharField(max_length=256, blank=True)
+
+    def __str__(self):
+        return self.name
+'''

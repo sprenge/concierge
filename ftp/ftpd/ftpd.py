@@ -67,6 +67,8 @@ class myFTPHandler(FTPHandler):
         camera_name = ''
         file_type = ''
         epoch = ''
+        analytics_profile = ''
+        recording_id = ''
         clients = get_registered_clients()
         for url in clients:
             log.debug("send post request to ftp hook %s", url)
@@ -81,19 +83,25 @@ class myFTPHandler(FTPHandler):
                         file_type = ret_data['type']
                     if 'epoch' in ret_data:
                         epoch = ret_data['epoch']
+                    if 'analytics_profile' in ret_data:
+                        analytics_profile = ret_data['analytics_profile']
+                        if not analytics_profile:
+                            analytics_profile = ""
+                    if 'id' in ret_data:
+                        recording_id= ret_data['id']              
             except Exception as e:
                 log.error("%s", e)
         
         # Trigger the motion service based on the presence of a jpeg
         # which means that type field is filled in with jgp
         if file_type == 'jpg':
-            print("espr", file)
             make_thumbnail('/root'+file)
             try:
                 data = {
                     'file': file, 
                     'type': file_type, 
                     'camera_name': camera_name,
+                    'analytics_profile': analytics_profile,
                     'epoch' : epoch
                 }
                 url = "http://"+cia+":5104/motion/api/v1.0/motion_detected"
@@ -109,6 +117,8 @@ class myFTPHandler(FTPHandler):
                     'file': file, 
                     'type': file_type, 
                     'camera_name': camera_name,
+                    'analytics_profile': analytics_profile,
+                    'id': recording_id,
                     'epoch': epoch
                 }
                 url = "http://"+cia+":5104/motion/api/v1.0/recording_ready"

@@ -38,15 +38,16 @@ class CameraSerializer(serializers.ModelSerializer):
 
 class RecordingSerializer(serializers.ModelSerializer):
     # camera = CameraSerializer()
+    # fpv = serializers.SerializerMethodField()
     
     class Meta:
         model = Recording
-        fields = ['camera', 'recording_date_time', 'file_path_video', 'file_path_snapshot', 'video_processed_by_analytics', 'url_thumbnail', 'url_video', 'url_snapshot']
+        fields = ['id', 'camera', 'recording_date_time', 'file_path_video', 'file_path_snapshot', 'video_processed_by_analytics', 'url_thumbnail', 'url_video', 'url_snapshot']
 
 class AnalyticsShapesSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnalyticsShapes
-        fields = ['shape',]
+        fields = ['shape', 'id']
 
 class AnalyticsProfilesSerializer(serializers.ModelSerializer):
     class Meta:

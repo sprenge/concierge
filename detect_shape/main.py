@@ -101,7 +101,6 @@ class FindShape(Resource):
                 ret, frame = cap.read()
                 if ret:
                     if skip_c == 0:
-                        log.debug("find shape for frame %s", frame_nbr)
                         fsl = find_shape(frame, frame_nbr)
                         shape_list.extend(fsl)
                         skip_c = skip_f
@@ -111,11 +110,46 @@ class FindShape(Resource):
 
         log.debug("find shape processing %s", time.time()-st)
         if shape_list:
-            log.debug("find shape request %s", shape_list)
+            log.debug("find shape shape_list %s", shape_list)
         return shape_list, 201
+
+class GetVideoClipMetaData(Resource):
+    '''
+    REST API class for the reception of motion on a given camera
+    '''
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('file', type = str, required = False, location = 'json')
+        super(GetVideoClipMetaData, self).__init__()
+
+    def post(self):
+        '''
+        Get following data from the mp4 video clip
+        '''
+        args = self.reqparse.parse_args()
+        data = {}
+
+        video_captured = cv2.VideoCapture(args['file'])
+        print("get video data for ", args['file'])
+        
+        fps = video_captured.get(cv2.CAP_PROP_FPS)      # OpenCV2 version 2 used "CV_CAP_PROP_FPS"
+        frame_count = int(video_captured.get(cv2.CAP_PROP_FRAME_COUNT))
+        try:
+            duration = frame_count/fps
+
+            data['fps'] = fps
+            data['frame_count'] = frame_count
+            print("video metadata", data)
+        except Exception as e:
+            log.error("{}".format(args['file']))
+            log.error(str(e))
+
+        return data, 201
+
 
 # bind resource for REST API service
 api.add_resource(FindShape, '/shape/api/v1.0/find_shape', endpoint = 'find_shape')
+api.add_resource(GetVideoClipMetaData, '/shape/api/v1.0/get_video_metadata', endpoint = 'get_video_metadata')
 
 
 try:

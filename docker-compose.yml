@@ -117,6 +117,21 @@ services:
       - ROOT_DIR
     restart: always
 
+  scheduler:
+    build:
+      context: .
+      dockerfile: ./scheduler/Dockerfile
+      args:
+        - TIMEZONE=$TIMEZONE
+    environment:
+      - CONCIERGE_IP_ADDRESS
+      - ROOT_DIR
+    volumes:
+      - /${ROOT_DIR}:/root
+    depends_on:
+      - gui
+    restart: always
+
   influx:
     build:
       context: .

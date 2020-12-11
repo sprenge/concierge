@@ -5,6 +5,47 @@ import requests
 
 url_string = 'http://{}:{}/write?db={}'
 
+def send_analytics_shape_data_to_influx(influx_host, camera, epoch, detected_shapes, shape_set, recording_id='', asset_type='image', video_metadata=None):
+    '''
+    Send detail
+    '''
+    url = url_string.format(influx_host, 8086, 'concierge')
+    start_millis = int(epoch) * 1000
+    
+    measurement = "camera_shapes_detected_img"
+    if asset_type == 'video':
+        measurement = "camera_shapes_detected_video"
+    shape_nbr = 0
+    for shape_rec in detected_shapes:
+        # istring = 'camera_shapes_detected,camera='+camera+" "
+        istring = measurement+',shape='+shape_rec['shape']+" "
+        if shape_rec['shape'] in shape_set:
+            # istring += 'shape="{}",'.format(shape_rec['shape'])
+            istring += 'confidence="{}",'.format(shape_rec['confidence'])
+            istring += 'frame_nbr="{}",'.format(shape_rec['frame_nbr'])
+            istring += 'camera="{}",'.format(camera)
+            if recording_id:
+                istring += 'recording_id="{}",'.format(recording_id)
+            if shape_rec['box']:
+                istring += 'startX="{}",'.format(shape_rec['box']['startX'])
+                istring += 'startY="{}",'.format(shape_rec['box']['startY'])
+                istring += 'endX="{}",'.format(shape_rec['box']['endX'])
+                istring += 'endY="{}",'.format(shape_rec['box']['endY'])
+            istring += 'epoch="{}"'.format(epoch)
+            millis = start_millis
+            if video_metadata:
+                millis += int(int(shape_rec['frame_nbr'])/video_metadata['fps']*1000)
+
+            istring += ' ' + str(millis) + '{0:06d}'.format(shape_nbr)
+            shape_nbr += 1
+            print("istring", istring)
+            print("url", url)
+            try:
+                r = requests.post(url, data=istring, timeout=5)
+            except Exception as e:
+                print("influxdb post exception", str(e))
+
+
 def summarize_analytic_data(data, recording_path, asset_type='image'):
     '''
     Transform data from shape detect to summary data in order to feed it influx db
