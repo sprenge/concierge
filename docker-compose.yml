@@ -103,6 +103,23 @@ services:
       - /${ROOT_DIR}:/root
     restart: always
 
+  detailed_analytics:
+    build:
+      context: .
+      dockerfile: ./detailed_analytics/Dockerfile
+      args:
+        - FLASK=$VERSION_FLASK
+        - FLASK_RESTFUL=$VERSION_FLASK_RESTFUL
+        - TIMEZONE=$TIMEZONE
+        - REQUESTS=$VERSION_REQUESTS
+    ports:
+            - "5106:5106"
+    environment:
+      - CONCIERGE_IP_ADDRESS
+    volumes:
+      - /${ROOT_DIR}:/root
+    restart: always
+
   motion_detection:
     build:
       context: .
@@ -151,6 +168,25 @@ services:
       - "3000:3000"
     restart: always
 
+  interworking:
+    build:
+      context: .
+      dockerfile: ./interworking/Dockerfile
+      args:
+        - FLASK=$VERSION_FLASK
+        - FLASK_RESTFUL=$VERSION_FLASK_RESTFUL
+        - TIMEZONE=$TIMEZONE
+        - REQUESTS=$VERSION_REQUESTS
+    ports:
+      - "5107:5107"
+    environment:
+      - CONCIERGE_IP_ADDRESS
+    volumes:
+      - /${ROOT_DIR}:/root
+    depends_on:
+      - influx
+    restart: always
+   
 networks:
   cinternal:
     internal: true

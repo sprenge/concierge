@@ -55,10 +55,21 @@ def get_desired_shapes(profile):
 def handle_deep_analytics():
     while(1):
         time.sleep(0.5)
+        recording_id = None
         lock.acquire()
         if len(deep_analytics_list) > 0:
-            record_id = deep_analytics_list.pop(0)
+            recording_id = deep_analytics_list.pop(0)
         lock.release()
+        if recording_id:
+            log.error("start_get_deep_data {}".format(recording_id))
+            data = {}
+            data['recording_id'] = str(recording_id)
+            try:
+                r = requests.post("http://"+cia+":5106/deep_analysis/api/v1.0/get_deep_data", json=data)
+            except Exception as e:
+                log.error(str(e))
+            if r.status_code != 201:
+                log.error("deep analytics error".format(r.status_code))
         time.sleep(0.5)
 
 def handle_shape_requests_jpg():
@@ -104,6 +115,7 @@ def handle_shape_requests_mp4():
             shape_request = shape_request_list_mp4.pop(0)
         lock.release()
         if shape_request:
+            log.debug("len_of_shape_request_list_mp4 {}".format(len(shape_request_list_mp4)))
             desired_shapes = get_desired_shapes(shape_request['analytics_profile'])
             if len(desired_shapes) > 0:
                 try:
@@ -113,11 +125,15 @@ def handle_shape_requests_mp4():
                     url = "http://"+cia+":5103/shape/api/v1.0/get_video_metadata"
                     r = requests.post(url, json=data, timeout=30)
                     if r.status_code == 201:            
-                        video_metadata = r.json()  
+                        video_metadata = r.json()
+                        filename, file_extension = os.path.splitext(shape_request['file'])
+                        file_base = '/root'+filename
                         data = {
                             "camera_name": shape_request['camera_name'], 
                             "file": '/root'+shape_request['file'], 
-                            "type": shape_request['type']
+                            "type": shape_request['type'],
+                            "recording_id": shape_request['id'],
+                            "file_base": file_base
                         }
                         url = "http://"+cia+":5105/shape/api/v1.0/find_shape"
                         r = requests.post(url, json=data, timeout=1200)
@@ -217,6 +233,6 @@ shape_handler_jpg = threading.Thread(target=handle_shape_requests_jpg, args=())
 shape_handler_jpg.start()
 shape_handler_mp4 = threading.Thread(target=handle_shape_requests_mp4, args=())
 shape_handler_mp4.start()
-deep_analytics = threading.Thread(target=handle_shape_requests_jpg, args=())
+deep_analytics = threading.Thread(target=handle_deep_analytics, args=())
 deep_analytics.start()
 app.run(host="0.0.0.0", port=5104)

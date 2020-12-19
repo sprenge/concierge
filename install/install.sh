@@ -35,8 +35,9 @@ cp nginx/uwsgi_params /nginx/uwsgi_params
 timedatectl set-timezone ${TIMEZONE}
 # echo "Install opencv, this will take some time"
 # apt install libopencv-dev python3-opencv
-apt install ubuntu-desktop
-grep -qF "dtoverlay"  /boot/firmware/syscfg.txt|| echo "dtoverlay=vc4-fkms-v3d" >> /boot/firmware/syscfg.txt
+apt-get install -y ubuntu-gnome-desktop
+# apt install ubuntu-desktop
+# grep -qF "dtoverlay"  /boot/firmware/syscfg.txt|| echo "dtoverlay=vc4-fkms-v3d" >> /boot/firmware/syscfg.txt
 echo "Package installation finished"
 
 echo "Building now docker containers, this will take a lot time"

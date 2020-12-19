@@ -40,24 +40,24 @@ def clean(cia, log):
             return
 
         sorted_db = sorted(db, key = lambda i: i['recording_date_time'])
-        print("sorted_db", sorted_db)
         rec = sorted_db.pop(0)
 
         # file_path_video
         try:
             del_url = url+'/'+str(rec['id'])+'/'
-            print("del_url", del_url)
             r = requests.delete(url+'/'+str(rec['id'])+'/')
             if r.status_code != 204:
                 log.error("cannot delete recording id {}".format(rec['id']))
+            else:
+                log.debug("removed_recording id {}".format(rec['id']))
         except Exception as e:
             log.error(str(e))
         path, file_extension = os.path.splitext(rec['file_path_video'])
         exts = ['.jpg', '.gif', '.mp4']
         for ext in exts:
             fn = "/root"+path+ext
-            print("fn", fn)
             if os.path.exists(fn):
+                log.debug("cleaned up file {}".format(fn))
                 os.remove(fn)
             else:
                 log.error("{} does not exist, hence cannot remove".format(fn))

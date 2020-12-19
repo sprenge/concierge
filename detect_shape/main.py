@@ -30,7 +30,7 @@ app = Flask(__name__)
 api = Api(app)
 cf = 0.6
 
-def find_shape(image, frame_nbr=0):
+def find_shape(image, frame_nbr=0, recording_id=None, file_base=None):
     shape_list = []
     net = cv2.dnn.readNetFromCaffe(pt, ca)
 
@@ -57,13 +57,10 @@ def find_shape(image, frame_nbr=0):
             pos = {"startX": int(startX), "startY": int(startY), "endX": int(endX), "endY": int(endY)}
             adict["box"] = pos
             adict["frame_nbr"] = frame_nbr
-            adict['faces'] = []
-            if CLASSES[idx] == 'person':
-                rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                boxes = face_recognition.face_locations(rgb, model="hog")
-                for top, right, bottom, left in boxes:
-                    face = {"top": int(top), 'right': int(right), 'bottom': int(bottom), 'left': int(left)}
-                    adict['faces'].append(face)
+            if recording_id and file_base:
+                fn = file_base+"_object_"+str(recording_id)+"_"+str(frame_nbr)+".jpg"
+                crop_img = image[startY:endY, startX:endX]
+                cv2.imwrite(fn, crop_img)
             shape_list.append(adict)
     return shape_list
 
@@ -76,6 +73,8 @@ class FindShape(Resource):
         self.reqparse.add_argument('camera_name', type = str, required = True, location = 'json')
         self.reqparse.add_argument('file', type = str, required = False, location = 'json')
         self.reqparse.add_argument('type', type = str, required = False, location = 'json')
+        self.reqparse.add_argument('file_base', type = str, required = False, location = 'json', store_missing='')
+        self.reqparse.add_argument('recording_id', type = str, required = False, location = 'json', store_missing='')
         super(FindShape, self).__init__()
 
     def post(self):
@@ -86,7 +85,16 @@ class FindShape(Resource):
         args = self.reqparse.parse_args()
         st = time.time()
         shape_list = []
+        recording_id = None
+        file_base = None
 
+        try:
+            recording_id = args['recording_id']
+            file_base = args['file_base']
+        except:
+            pass
+
+        log.debug("start_find_shape for {}".format(args['file']))
         cap = cv2.VideoCapture(args['file'])
         if args['type'] == "jpg":
             ret, frame = cap.read()
@@ -101,14 +109,14 @@ class FindShape(Resource):
                 ret, frame = cap.read()
                 if ret:
                     if skip_c == 0:
-                        fsl = find_shape(frame, frame_nbr)
+                        fsl = find_shape(frame, frame_nbr=frame_nbr, recording_id=recording_id, file_base=file_base)
                         shape_list.extend(fsl)
                         skip_c = skip_f
                     else:
                         skip_c = skip_c - 1
                     frame_nbr += 1
-
-        log.debug("find shape processing %s", time.time()-st)
+        log.debug("end_find_shape for {}".format(args['file']))
+        log.debug("find shape processing time %s", time.time()-st)
         if shape_list:
             log.debug("find shape shape_list %s", shape_list)
         return shape_list, 201
@@ -130,7 +138,6 @@ class GetVideoClipMetaData(Resource):
         data = {}
 
         video_captured = cv2.VideoCapture(args['file'])
-        print("get video data for ", args['file'])
         
         fps = video_captured.get(cv2.CAP_PROP_FPS)      # OpenCV2 version 2 used "CV_CAP_PROP_FPS"
         frame_count = int(video_captured.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -139,7 +146,6 @@ class GetVideoClipMetaData(Resource):
 
             data['fps'] = fps
             data['frame_count'] = frame_count
-            print("video metadata", data)
         except Exception as e:
             log.error("{}".format(args['file']))
             log.error(str(e))
