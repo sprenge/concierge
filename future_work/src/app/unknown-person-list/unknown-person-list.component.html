@@ -1,0 +1,38 @@
+
+<div class="row">
+  <div class="form-group shadow-lg col-sm-2 p-3">
+  <label for="startDate">start date:</label>
+    <input [(ngModel)]="start_date" type="date" id="startdate" name="startDate">
+  </div>
+
+  <div class="form-group shadow-lg col-sm-2 p-3">
+    <label for="startTime">start time:</label>
+    <input [(ngModel)]="start_time" type="time" id="starttime" name="startTime">
+  </div>
+
+  <div class="form-group shadow-lg col-sm-2 p-3">
+  <label for="endDate">end date:</label>
+    <input [(ngModel)]="end_date" type="date" id="enddate" name="endDate">
+  </div>
+
+  <div class="form-group shadow-lg col-sm-2 p-3">
+    <label for="endTime">end time:</label>
+    <input [(ngModel)]="end_time" type="time" id="endtime" name="endTime">
+  </div>
+
+  <div class="form-group shadow-lg col-sm-2 p-3">
+    <label for="ShapeSelection">Shape selection</label>
+    <select id="shape_id" name="shape_objects" [(ngModel)]="shape_id" class="form-control">
+      <option *ngFor="let shape_object of shape_objects" [value]="shape_object.id">{{shape_object.name}}</option>
+    </select>
+  </div>
+
+</div>
+<p>{{start_time}}</p>
+<button class="btn btn-primary btn-lg" (click)="clickFunction()">Apply filter</button>
+
+<div class="row">
+  <div *ngFor="let property of properties" class="shadow-lg col-sm-4 p-3">
+    <unknown-person-card [property]="property"></unknown-person-card>
+  </div>
+</div>
