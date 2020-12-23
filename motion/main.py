@@ -3,6 +3,8 @@ import logging
 import copy
 import time
 import threading
+from os import listdir
+from os.path import isfile, join
 import requests
 from flask import Flask, jsonify
 from flask_restful import Resource, Api, reqparse
@@ -52,6 +54,21 @@ def get_desired_shapes(profile):
         log.error(str(e))
     return shape_set
 
+def cleanup_unreferenced_snapshot(video_file, recording_id, shape_list):
+    '''
+    '''
+    path, fn = os.path.split(video_file)
+    all_files = [join(path, f) for f in listdir(path) if isfile(join(path, f))]
+    snapshot_files = []
+    for shape in shape_list:
+        if 'snapshot' in shape:
+            snapshot_files.append(shape['snapshot'])
+    for afile in all_files:
+        if 'snapshot'+str(recording_id) in afile:
+            if afile not in snapshot_files:
+                os.remove(afile)
+            
+
 def handle_deep_analytics():
     while(1):
         time.sleep(0.5)
@@ -61,7 +78,7 @@ def handle_deep_analytics():
             recording_id = deep_analytics_list.pop(0)
         lock.release()
         if recording_id:
-            log.error("start_get_deep_data {}".format(recording_id))
+            log.info("start_get_deep_data {}".format(recording_id))
             data = {}
             data['recording_id'] = str(recording_id)
             try:
@@ -137,17 +154,22 @@ def handle_shape_requests_mp4():
                         }
                         url = "http://"+cia+":5105/shape/api/v1.0/find_shape"
                         r = requests.post(url, json=data, timeout=1200)
-                        influxdb.send_analytics_shape_data_to_influx(
-                            cia, 
-                            shape_request['camera_name'], 
-                            shape_request['epoch'], 
-                            r.json(), desired_shapes, 
-                            recording_id=shape_request['id'], 
-                            asset_type='video',
-                            video_metadata = video_metadata)
-                        lock.acquire()
-                        deep_analytics_list.append(shape_request['id'])
-                        lock.release()
+                        if r.status_code == 201:
+                            shape_list = r.json()
+                            cleanup_unreferenced_snapshot(data['file'], data['recording_id'], shape_list)
+                            influxdb.send_analytics_shape_data_to_influx(
+                                cia, 
+                                shape_request['camera_name'], 
+                                shape_request['epoch'], 
+                                shape_list, desired_shapes, 
+                                recording_id=shape_request['id'], 
+                                asset_type='video',
+                                video_metadata = video_metadata)
+                            lock.acquire()
+                            deep_analytics_list.append(shape_request['id'])
+                            lock.release()
+                        else:
+                            log.error("find_shape error code {}".format(r.status_code))
                     else:
                         log.error("cannot get video metadata for {}".format(data['file']))
 

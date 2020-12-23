@@ -1,5 +1,6 @@
 from datetime import datetime
 import os
+import glob
 import shutil 
 import requests
 
@@ -53,9 +54,11 @@ def clean(cia, log):
         except Exception as e:
             log.error(str(e))
         path, file_extension = os.path.splitext(rec['file_path_video'])
-        exts = ['.jpg', '.gif', '.mp4']
-        for ext in exts:
-            fn = "/root"+path+ext
+        # exts = ['.jpg', '.gif', '.mp4']
+        print("espr_clean_up_files", path)
+        file_list = glob.glob('/root'+path+"*")
+        print("file_list", file_list)
+        for fn in file_list:
             if os.path.exists(fn):
                 log.debug("cleaned up file {}".format(fn))
                 os.remove(fn)

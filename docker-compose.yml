@@ -132,6 +132,8 @@ services:
     environment:
       - CONCIERGE_IP_ADDRESS
       - ROOT_DIR
+    volumes:
+      - /${ROOT_DIR}:/root
     restart: always
 
   scheduler:

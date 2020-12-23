@@ -1,4 +1,5 @@
 import os
+import math
 import logging
 import time
 import threading
@@ -20,6 +21,7 @@ log = logging.getLogger()
 
 pt = './pi-object-detection/MobileNetSSD_deploy.prototxt.txt'
 ca = './pi-object-detection/MobileNetSSD_deploy.caffemodel'
+position_tracker = set()
 
 CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
         "bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
@@ -29,6 +31,57 @@ CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
 app = Flask(__name__)
 api = Api(app)
 cf = 0.6
+
+def make_pixel_key(x, y):
+    return str(x)+'_'+str(y)
+
+def get_pixel_pos(key):
+    l = key.split("_")
+    return int(l[0]), int(l[1])
+
+def is_close_pixel(new_key):
+    '''
+    Is the new_key (=string) close to another position ? :
+    - True : yes
+    - False : not found, added in position tracker
+    '''
+    global position_tracker
+    max_distance = 50
+
+    x1, y1 = get_pixel_pos(new_key)
+    fnd = None
+    for akey in position_tracker:
+        x2, y2 = get_pixel_pos(akey)
+        dist2 = (y2-y1)**2 + (x2-x1)**2
+        dist = int(math.sqrt(dist2))
+        if dist < max_distance:
+            fnd = akey
+
+    if fnd:
+        return True
+    position_tracker.add(new_key) # add to the pixel database
+    return False
+
+def filter_unique_positions(fsl):
+    '''
+    Remove duplicated on same center position
+    '''
+    global position_tracker
+
+    new_list = []
+    for rec in fsl:
+        # calculate center position
+        startX = int(rec['box']['startX'])
+        startY = int(rec['box']['startY'])
+        endX = int(rec['box']['endX'])
+        endY = int(rec['box']['endY'])
+        x_pos = startX + int((endX-startX)/2)
+        y_pos = startY + int((endY-startY)/2)
+        pixel_key = make_pixel_key(x_pos, y_pos)
+        if not is_close_pixel(pixel_key):
+            new_list.append(rec)
+
+    return new_list
 
 def find_shape(image, frame_nbr=0, recording_id=None, file_base=None):
     shape_list = []
@@ -40,6 +93,7 @@ def find_shape(image, frame_nbr=0, recording_id=None, file_base=None):
     net.setInput(blob)
     detections = net.forward()
 
+    item_nbr = 0
     for i in np.arange(0, detections.shape[2]):
         # extract the confidence (i.e., probability) associated with the
         # prediction
@@ -50,18 +104,26 @@ def find_shape(image, frame_nbr=0, recording_id=None, file_base=None):
             # extract the index of the class label from the `detections`,
             # then compute the (x, y)-coordinates of the bounding box for
             # the object
-            idx = int(detections[0, 0, i, 1])
-            box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
-            (startX, startY, endX, endY) = box.astype("int")
-            adict = {'shape': CLASSES[idx], 'confidence': confidence * 100}
-            pos = {"startX": int(startX), "startY": int(startY), "endX": int(endX), "endY": int(endY)}
-            adict["box"] = pos
-            adict["frame_nbr"] = frame_nbr
-            if recording_id and file_base:
-                fn = file_base+"_object_"+str(recording_id)+"_"+str(frame_nbr)+".jpg"
-                crop_img = image[startY:endY, startX:endX]
-                cv2.imwrite(fn, crop_img)
-            shape_list.append(adict)
+            try:
+                idx = int(detections[0, 0, i, 1])
+                box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+                (startX, startY, endX, endY) = box.astype("int")
+                adict = {'shape': CLASSES[idx], 'confidence': confidence * 100}
+                pos = {"startX": int(startX), "startY": int(startY), "endX": int(endX), "endY": int(endY)}
+                adict["box"] = pos
+                adict["frame_nbr"] = frame_nbr
+                obj_str = "_snapshot{}_{}{}_frame{}".format(str(recording_id), adict['shape'], item_nbr, str(frame_nbr))
+                if recording_id and file_base:
+                    fn = file_base+obj_str+".jpg"
+                    crop_img = image[startY:endY, startX:endX]
+                    cv2.imwrite(fn, crop_img)
+                    adict['snapshot'] = fn
+                    url = 'http://'+cia+':80'+fn.replace('/root', '')
+                    adict['snapshot_url'] = url
+                shape_list.append(adict)
+                item_nbr += 1
+            except Exception as e:
+                log.error(str(e))
     return shape_list
 
 class FindShape(Resource):
@@ -82,6 +144,7 @@ class FindShape(Resource):
         Receive request to find shapes in an image file or video file
         Supports two file formats (file suffixes) : jpg and mp4
         '''
+        global position_tracker
         args = self.reqparse.parse_args()
         st = time.time()
         shape_list = []
@@ -94,6 +157,7 @@ class FindShape(Resource):
         except:
             pass
 
+        position_tracker = set()
         log.debug("start_find_shape for {}".format(args['file']))
         cap = cv2.VideoCapture(args['file'])
         if args['type'] == "jpg":
@@ -110,7 +174,8 @@ class FindShape(Resource):
                 if ret:
                     if skip_c == 0:
                         fsl = find_shape(frame, frame_nbr=frame_nbr, recording_id=recording_id, file_base=file_base)
-                        shape_list.extend(fsl)
+                        up_list = filter_unique_positions(fsl)
+                        shape_list.extend(up_list)
                         skip_c = skip_f
                     else:
                         skip_c = skip_c - 1

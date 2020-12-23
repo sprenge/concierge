@@ -16,7 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers, serializers, viewsets
-from camera.models import Camera, CameraListeners, CameraBrand, CameraType, Recording, AnalyticsShapes, AnalyticsProfile
+from camera.models import Camera, CameraListeners, CameraBrand, CameraType, Recording, AnalyticsShapes, AnalyticsProfile, KnownObjects
 
 class CameraBrandSerializer(serializers.ModelSerializer):
     class Meta:
@@ -54,6 +54,11 @@ class AnalyticsProfilesSerializer(serializers.ModelSerializer):
         model = AnalyticsProfile
         fields = ['id', 'name', 'shapes', 'min_nbr_video_frames_skipped', 'max_nbr_video_frames_skipped', 'confidence_level']
 
+class KnownObjectsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = KnownObjects
+        fields = ['id', 'name', 'file_path_image', 'object_type', 'identified', 'recording_id', 'frame_nbr', 'deep_learning_done']
+
 class CameraTypeViewSet(viewsets.ModelViewSet):
     queryset = CameraType.objects.all()
     serializer_class = CameraTypeSerializer
@@ -87,6 +92,10 @@ class AnalyticsShapesViewSet(viewsets.ModelViewSet):
     queryset = AnalyticsShapes.objects.all()
     serializer_class = AnalyticsShapesSerializer
 
+class KnownObjectsViewSet(viewsets.ModelViewSet):
+    queryset = KnownObjects.objects.all()
+    serializer_class = KnownObjectsSerializer
+
 router = routers.DefaultRouter()
 router.register(r'cameras', CameraViewSet)
 router.register(r'camera_listeners', CameraListenerViewSet)
@@ -94,6 +103,7 @@ router.register(r'camera_types', CameraTypeViewSet)
 router.register(r'recordings', CameraRecordingViewSet)
 router.register(r'analytics_profiles', AnalyticsProfilesViewSet)
 router.register(r'analytics_shapes', AnalyticsShapesViewSet)
+router.register(r'known_objects', KnownObjectsViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),

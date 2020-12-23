@@ -23,6 +23,10 @@ def send_analytics_shape_data_to_influx(influx_host, camera, epoch, detected_sha
             # istring += 'shape="{}",'.format(shape_rec['shape'])
             istring += 'confidence="{}",'.format(shape_rec['confidence'])
             istring += 'frame_nbr="{}",'.format(shape_rec['frame_nbr'])
+            if 'snapshot' in shape_rec:
+                istring += 'snapshot="{}",'.format(shape_rec['snapshot'])
+            if 'snapshot_url' in shape_rec:
+                istring += 'snapshot_url="{}",'.format(shape_rec['snapshot_url'])
             istring += 'camera="{}",'.format(camera)
             if recording_id:
                 istring += 'recording_id="{}",'.format(recording_id)

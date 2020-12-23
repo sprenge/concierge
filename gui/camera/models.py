@@ -170,15 +170,14 @@ class AnalyticsProfile(models.Model):
         return self.name
 
 
-'''
 class KnownObjects(models.Model):
     name = models.CharField(max_length=256, blank=True)
-    file_path_image = models.CharField(max_length=512)
-    object_type = models.ForeignKey('AnalyticsShapes', null=True, blank=True)
+    file_path_image = models.CharField(max_length=512, unique=True)
+    object_type = models.ForeignKey('AnalyticsShapes', null=True, blank=True, on_delete=models.CASCADE)
     identified = models.BooleanField(default=True, help_text="Set to False for instance if a person is not identified yet")
+    deep_learning_done = models.BooleanField(default=False, help_text="Set to True if deep learing processing is finished")
     recording_id = models.CharField(max_length=256, blank=True)
     frame_nbr = models.CharField(max_length=256, blank=True)
 
     def __str__(self):
         return self.name
-'''

@@ -1,0 +1,4 @@
+- remove timezone field in table
+- add retention period influxdb
+- flow control CPU intensive tasks
+- Thresholds cleanup from environment

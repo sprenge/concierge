@@ -1,6 +1,7 @@
 import os
 import logging
 import time
+import pickle
 import threading
 import requests
 from flask import Flask, jsonify
@@ -84,7 +85,54 @@ class DeepAnalysis(Resource):
 
         return shape_list, 201
 
+class CreateDeepData(Resource):
+    '''
+
+    '''
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('record_id', type = str, required = True, location = 'json')
+        super(CreateDeepData, self).__init__()
+
+    def post(self):
+        '''
+        '''
+        args = self.reqparse.parse_args()
+        url = "http://"+cia+":80/rest/known_objects/"+args['record_id']+'/'
+        try:
+            r = requests.get(url)
+            if r.status_code == 200:
+                rec = r.json()
+                print("rec", rec)
+                if rec['object_type'] == 16:
+                    cap = cv2.VideoCapture(rec['file_path_image'])
+                    ret, frame = cap.read()
+                    if ret:
+                        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        boxes = face_recognition.face_locations(rgb, model="hog")
+                        if len(boxes) > 0:
+                            log.info("face detected, create encodings {}".format(args['record_id']))
+                            encodings = face_recognition.face_encodings(rgb, boxes)
+                            fn = rec['file_path_image'].replace(".jpg",".enc")
+                            fr = open(fn, "wb")
+                            fr.write(pickle.dumps(encodings))
+                            fr.close()
+                            rec['deep_learning_done'] = True
+                            r = requests.put(url, data=rec)
+                        else:
+                            log.info("no face detected remove record {}".format(args['record_id']))
+                            r = requests.delete(url)
+                else:
+                    # not a person
+                    print("create_deep_data for object")
+
+        except Exception as e:
+            log.error(str(e))
+
+        return [], 201
+
 api.add_resource(DeepAnalysis, '/deep_analysis/api/v1.0/get_deep_data', endpoint = 'get_deep_data')
+api.add_resource(CreateDeepData, '/deep_analysis/api/v1.0/create_deep_data', endpoint = 'create_deep_data')
 
 
 try:

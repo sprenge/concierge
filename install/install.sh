@@ -21,6 +21,7 @@ fi
 mkdir -p $ROOT_DIR
 mkdir -p "${ROOT_DIR}/static"
 mkdir -p "${ROOT_DIR}/static/recordings"
+mkdir -p "${ROOT_DIR}/static/ko"
 mkdir -p "${ROOT_DIR}/snapshot"
 mkdir -p "${ROOT_DIR}/influx/data1"
 mkdir -p "${ROOT_DIR}/influx/data2"
