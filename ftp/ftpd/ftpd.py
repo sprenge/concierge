@@ -45,7 +45,7 @@ except:
 def get_registered_clients():
     clients = []
     try:
-        r = requests.get("http://"+cia+":80/rest/camera_listeners/", timeout=5)
+        r = requests.get("http://"+cia+":8000/rest/camera_listeners/", timeout=5)
         if r.status_code == 200:
             for rec in r.json():
                 if rec['callback_type'] == 'ftp':

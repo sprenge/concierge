@@ -18,13 +18,13 @@ services:
     environment:
       - CONCIERGE_IP_ADDRESS
     depends_on:
-      - gui
+      - backenddb
     restart: always
 
   nginx:
     image: nginx:1.13
     ports:
-      - "80:8000"
+      - "8000:8000"
     volumes:
       - /nginx/conf:/etc/nginx/conf.d
       - /nginx/uwsgi_params:/etc/nginx/uwsgi_params
@@ -33,13 +33,13 @@ services:
       - TZ=$TIMEZONE
     restart: always
 
-  gui:
-    build: ./gui
-    command: uwsgi --threads 8 --processes 8 --socket :8001 --module gui.wsgi --py-autoreload 1 --logto /tmp/mylog.log
+  backenddb:
+    build: ./backenddb
+    command: uwsgi --threads 8 --processes 8 --socket :8001 --module backenddb.wsgi --py-autoreload 1 --logto /tmp/mylog.log
     ports:
       - "8001:8001"
     volumes:
-      - ./gui:/code
+      - ./backenddb:/code
       - ${ROOT_DIR}/static:/static
       - ${ROOT_DIR}:/root
     expose:
@@ -64,7 +64,7 @@ services:
     environment:
       - CONCIERGE_IP_ADDRESS
     depends_on:
-      - gui
+      - backenddb
     restart: always
 
   detect_shape_snapshot:
@@ -148,7 +148,7 @@ services:
     volumes:
       - /${ROOT_DIR}:/root
     depends_on:
-      - gui
+      - backenddb
     restart: always
 
   influx:

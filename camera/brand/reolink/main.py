@@ -37,7 +37,7 @@ if __name__ == '__main__':
     while (registration_not_done):
         try:
             # Register callback REST API for configuration request for Reolink camera's
-            r = requests.post("http://"+cia+":80/rest/camera_listeners/", 
+            r = requests.post("http://"+cia+":8000/rest/camera_listeners/", 
                               json={
                                 "url": "http://"+cia+":5102/camera/api/v1.0/reoconfig", 
                                 "description": "Config callback for Reolink camera's", 
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     while (registration_not_done):
         try:
             # Register callback REST API for configuration request for Reolink camera's
-            r = requests.post("http://"+cia+":80/rest/camera_listeners/", 
+            r = requests.post("http://"+cia+":8000/rest/camera_listeners/", 
                               json={
                                 "url": "http://"+cia+":5102/camera/api/v1.0/newrecording", 
                                 "description": "Recording callback for Reolink camera's", 

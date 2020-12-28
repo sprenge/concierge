@@ -57,7 +57,7 @@ class NewRecording(Resource):
             file_extension = file_extension.replace('.', '')
             if file_extension in ['jpg', 'mp4']:
                 try:
-                    url = "http://"+cia+":80/rest/cameras/"
+                    url = "http://"+cia+":8000/rest/cameras/"
                     r = requests.get(url)
                     if r.status_code == 200:
                         for camera in r.json():
@@ -79,10 +79,10 @@ class NewRecording(Resource):
                                         data['recording_date_time'] = dt
                                         data['file_path_snapshot'] = args['file'].replace(".mp4", '.jpg')
                                         pre, ext = os.path.splitext(args['file'])
-                                        data['url_thumbnail'] = "http://"+cia+":80"+pre+'.gif'
-                                        data['url_video'] = "http://"+cia+":80"+pre+'.mp4'
-                                        data['url_snapshot'] = "http://"+cia+":80"+pre+'.jpg'
-                                        url = "http://"+cia+":80/rest/recordings/"
+                                        data['url_thumbnail'] = "http://"+cia+":8000"+pre+'.gif'
+                                        data['url_video'] = "http://"+cia+":8000"+pre+'.mp4'
+                                        data['url_snapshot'] = "http://"+cia+":8000"+pre+'.jpg'
+                                        url = "http://"+cia+":8000/rest/recordings/"
                                         try:
                                             r = requests.post(url, json=data, timeout=10)
                                             if r.status_code != 201:

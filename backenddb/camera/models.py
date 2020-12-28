@@ -16,7 +16,7 @@ try:
     cia = os.environ['CONCIERGE_IP_ADDRESS']
 except:
     cia = '127.0.0.1'
-print("CONCIERGE_IP_ADDRESS gui %s", cia)
+print("CONCIERGE_IP_ADDRESS backenddb %s", cia)
 
 def validate_not_underscore(value):
     if '_' in value:
@@ -127,7 +127,7 @@ class Recording(models.Model):
 
     @property
     def full_video_path(self):
-        return "http://{}:80".format(cia)+self.file_path_video
+        return "http://{}:8000".format(cia)+self.file_path_video
     
     def image_img(self):
         if self.url_thumbnail:

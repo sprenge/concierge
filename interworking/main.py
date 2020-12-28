@@ -41,7 +41,7 @@ def time2epoch(s):
     return "0"
 
 def get_shape_ojects():
-    url = "http://"+cia+":80/rest/analytics_shapes/"
+    url = "http://"+cia+":8000/rest/analytics_shapes/"
     try:
         r = requests.get(url)
         if r.status_code == 200:
@@ -79,7 +79,7 @@ class ShapesVideoInflux(Resource):
             return [], 200
         object_link_template = None
         try:
-            r = requests.get("http://"+cia+":80/rest/recordings/"+str(recording_id))
+            r = requests.get("http://"+cia+":8000/rest/recordings/"+str(recording_id))
             if r.status_code == 200:
                 object_link_template = r.json()['url_video']
         except Exception as e:
@@ -197,7 +197,7 @@ class CreateKnownObject(Resource):
         dummy_path, fn = os.path.split(src_fn)
         if os.path.exists(src_fn):
             copyfile(src_fn, "/root/static/ko/"+fn)
-            url = "http://"+cia+":80/rest/known_objects/"
+            url = "http://"+cia+":8000/rest/known_objects/"
             data = {}
             data['recording_id'] = args['recording_id']
             data['frame_nbr'] = args['frame_nbr']

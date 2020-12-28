@@ -15,7 +15,7 @@ disk_low = 0.8
 def clean(cia, log):
     stat = shutil.disk_usage('/root')
     disk_used = stat.used/stat.total
-    url = "http://"+cia+'/rest/recordings'
+    url = "http://"+cia+':8000/rest/recordings'
     items_cleaned = 0
     while disk_used > disk_low:
         stat = shutil.disk_usage('/root')

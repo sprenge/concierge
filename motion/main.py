@@ -35,8 +35,8 @@ def get_desired_shapes(profile):
     if not profile:
         log.info("no analytics profile set")
         return shape_set
-    url_profile = "http://"+cia+"/rest/analytics_profiles/"+profile
-    url_shape = "http://"+cia+"/rest/analytics_shapes"
+    url_profile = "http://"+cia+":8000/rest/analytics_profiles/"+profile
+    url_shape = "http://"+cia+":8000/rest/analytics_shapes"
     shape_list_db = []
     try:
         r = requests.get(url_profile)

@@ -43,8 +43,8 @@ echo "Package installation finished"
 
 echo "Building now docker containers, this will take a lot time"
 docker-compose build
-docker-compose run gui python3 manage.py migrate
-docker-compose run gui python3 manage.py collectstatic
-docker-compose run gui python3 manage.py loaddata initial_data.json
-# docker-compose run gui python3 manage.py dumpdata --natural-primary --natural-foreign --indent 4 -e sessions -e admin -e contenttypes -e auth.Permission > initial_data.json
+docker-compose run backenddb python3 manage.py migrate
+docker-compose run backenddb python3 manage.py collectstatic
+docker-compose run backenddb python3 manage.py loaddata initial_data.json
+# docker-compose run backenddb python3 manage.py dumpdata --natural-primary --natural-foreign --indent 4 -e sessions -e admin -e contenttypes -e auth.Permission > initial_data.json
 echo "Installation finished, reboot now the system"

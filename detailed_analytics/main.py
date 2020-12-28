@@ -64,7 +64,7 @@ class DeepAnalysis(Resource):
         if r.status_code == 200:
             shape_list = r.json()
             try:
-                r = requests.get("http://"+cia+":80/rest/recordings/"+args['recording_id']+'/')
+                r = requests.get("http://"+cia+":8000/rest/recordings/"+args['recording_id']+'/')
                 if r.status_code == 200:
                     recording_data = r.json()
                     cap = cv2.VideoCapture('/root'+recording_data['file_path_video'])
@@ -98,7 +98,7 @@ class CreateDeepData(Resource):
         '''
         '''
         args = self.reqparse.parse_args()
-        url = "http://"+cia+":80/rest/known_objects/"+args['record_id']+'/'
+        url = "http://"+cia+":8000/rest/known_objects/"+args['record_id']+'/'
         try:
             r = requests.get(url)
             if r.status_code == 200:
