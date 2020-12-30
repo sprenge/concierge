@@ -19,6 +19,9 @@ FORMAT = '%(levelname)s %(message)s'
 logging.basicConfig(format=FORMAT, level=getattr(logging, log_level))
 log = logging.getLogger()
 
+record_ids = []
+encodings = []
+
 app = Flask(__name__)
 api = Api(app)
 
@@ -131,8 +134,41 @@ class CreateDeepData(Resource):
 
         return [], 201
 
+class ReadKnownObjects(Resource):
+    '''
+
+    '''
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        super(ReadKnownObjects, self).__init__()
+
+    def get(self):
+        '''
+        '''
+        url = "http://"+cia+":8000/rest/known_objects/"
+        try:
+            r = requests.get(url)
+            if r.status_code == 200:
+                all_objects = r.json()
+                for rec in all_objects():
+                    if rec['object_type'] == 16:
+                        if rec['identified']:
+                            if rec['id'] not in record_ids:
+                                fn = rec['file_path_image'].replace(".jpg", ".enc")
+                                fr = open(fn, "rb")
+                                data = fr.read()
+                                fr.close()
+                                encoding = pickle.loads(data)
+                                encodings.append(encoding)
+                                record_ids.append(rec['id'])
+                                print("len record_ids", len(record_ids))
+
+        except Exception as e:
+            log.error(str(e))
+
 api.add_resource(DeepAnalysis, '/deep_analysis/api/v1.0/get_deep_data', endpoint = 'get_deep_data')
 api.add_resource(CreateDeepData, '/deep_analysis/api/v1.0/create_deep_data', endpoint = 'create_deep_data')
+api.add_resource(ReadKnownObjects, '/deep_analysis/api/v1.0/read_known_objects', endpoint = 'read_known_objects')
 
 
 try:

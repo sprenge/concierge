@@ -2,12 +2,14 @@ import os
 import re
 import logging
 import time
+import copy
 import threading
 import datetime
 from shutil import copyfile
 import requests
 from flask import Flask, jsonify
 from flask_restful import Resource, Api, reqparse
+from flask_cors import CORS
 import influxdb
 
 # setup logging
@@ -21,7 +23,7 @@ log = logging.getLogger()
 
 app = Flask(__name__)
 api = Api(app)
-
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 def time2epoch(s):
     match = re.match("^(\d{4})-(\d{2})-(\d{2})-(\d{2}):(\d{2}).*", s)
@@ -45,7 +47,9 @@ def get_shape_ojects():
     try:
         r = requests.get(url)
         if r.status_code == 200:
-            return r.json()
+            alist = r.json()
+            alist.append({"shape": "all", "id": 99})
+            return alist
         else:
             log.error("GetShapeObjects status code {}".format(r.status_code))
     except Exception as e:
@@ -233,7 +237,7 @@ api.add_resource(CreateKnownObject, '/interworking/api/v1.0/create_known_object'
 try:
     cia = os.environ['CONCIERGE_IP_ADDRESS']
 except:
-    cia = '192.168.1.59'
+    cia = '127.0.0.1'
 
 log.info("CONCIERGE_IP_ADDRESS %s", cia)
 

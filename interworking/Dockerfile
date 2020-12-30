@@ -12,6 +12,7 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata
 RUN pip3 install requests==${REQUESTS}
 RUN pip3 install Flask==${FLASK}
 RUN pip3 install Flask-RESTful==${FLASK_RESTFUL}
+RUN pip3 install Flask-Cors
 RUN pip3 install influxdb
 
 COPY ./interworking /
