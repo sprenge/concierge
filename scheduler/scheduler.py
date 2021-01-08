@@ -44,7 +44,7 @@ def recordings_cleaner():
     clean(cia, log)
 
 schedule.every().hour.do(recordings_cleaner)
-schedule.every().minute.do(create_deep_data)
+schedule.every(15).minutes.do(create_deep_data)
 
 while True:
     schedule.run_pending()

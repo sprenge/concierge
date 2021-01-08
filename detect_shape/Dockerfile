@@ -17,6 +17,7 @@ RUN pip3 install cmake
 RUN pip3 install dlib
 RUN pip3 install face-recognition==1.3.0
 RUN pip3 install face-recognition-models==0.3.0
+RUN pip3 install Pillow
 
 COPY ./detect_shape /
 

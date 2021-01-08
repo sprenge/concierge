@@ -3,6 +3,7 @@ import logging
 import copy
 import time
 import threading
+import json
 from os import listdir
 from os.path import isfile, join
 import requests
@@ -32,6 +33,7 @@ def get_desired_shapes(profile):
     Lookup the shapes configured into the database eligible for hits
     '''
     shape_set = set()
+    confidence_level = 0.7
     if not profile:
         log.info("no analytics profile set")
         return shape_set
@@ -42,6 +44,7 @@ def get_desired_shapes(profile):
         r = requests.get(url_profile)
         if r.status_code == 200:
             shape_list_db = r.json()['shapes']
+            confidence_level = r.json()['confidence_level'] / 100
     except Exception as e:
         log.error(str(e))
     try:
@@ -52,22 +55,8 @@ def get_desired_shapes(profile):
                     shape_set.add(rec['shape'])
     except Exception as e:
         log.error(str(e))
-    return shape_set
+    return shape_set, confidence_level
 
-def cleanup_unreferenced_snapshot(video_file, recording_id, shape_list):
-    '''
-    '''
-    path, fn = os.path.split(video_file)
-    all_files = [join(path, f) for f in listdir(path) if isfile(join(path, f))]
-    snapshot_files = []
-    for shape in shape_list:
-        if 'snapshot' in shape:
-            snapshot_files.append(shape['snapshot'])
-    for afile in all_files:
-        if 'snapshot'+str(recording_id) in afile:
-            if afile not in snapshot_files:
-                os.remove(afile)
-            
 
 def handle_deep_analytics():
     while(1):
@@ -89,39 +78,6 @@ def handle_deep_analytics():
                 log.error("deep analytics error".format(r.status_code))
         time.sleep(0.5)
 
-def handle_shape_requests_jpg():
-    while(1):
-        shape_request = None
-        lock.acquire()
-        if len(shape_request_list_jpg) > 0:
-            # take the next analytics request from the queue
-            shape_request = shape_request_list_jpg.pop(0)
-        lock.release()
-        if shape_request:
-            desired_shapes = get_desired_shapes(shape_request['analytics_profile'])
-            if len(desired_shapes) > 0:
-                try:
-                    data = {
-                        "camera_name": shape_request['camera_name'], 
-                        "file": '/root'+shape_request['file'], 
-                        "type": shape_request['type']
-                    }
-                    url = "http://"+cia+":5103/shape/api/v1.0/find_shape"
-                    r = requests.post(url, json=data, timeout=30)
-                    if r.status_code == 201:
-                        influxdb.send_analytics_shape_data_to_influx(
-                            cia, 
-                            shape_request['camera_name'], 
-                            shape_request['epoch'], 
-                            r.json(), desired_shapes, 
-                            )
-                    else:
-                        log.error("expect error code 201, got %s", r.status_code)
-                except Exception as e:
-                    log.error("%s", str(e))      
-            else:
-                log.info("No shapes to be analysed for jpg")
-        time.sleep(0.5)
 
 def handle_shape_requests_mp4():
     while(1):
@@ -133,7 +89,7 @@ def handle_shape_requests_mp4():
         lock.release()
         if shape_request:
             log.debug("len_of_shape_request_list_mp4 {}".format(len(shape_request_list_mp4)))
-            desired_shapes = get_desired_shapes(shape_request['analytics_profile'])
+            desired_shapes, confidence_level = get_desired_shapes(shape_request['analytics_profile'])
             if len(desired_shapes) > 0:
                 try:
                     data = {
@@ -150,13 +106,14 @@ def handle_shape_requests_mp4():
                             "file": '/root'+shape_request['file'], 
                             "type": shape_request['type'],
                             "recording_id": shape_request['id'],
-                            "file_base": file_base
+                            "file_base": file_base,
+                            "desired_shapes": json.dumps(list(desired_shapes)),
+                            "confidence_level": confidence_level
                         }
                         url = "http://"+cia+":5105/shape/api/v1.0/find_shape"
                         r = requests.post(url, json=data, timeout=1200)
                         if r.status_code == 201:
                             shape_list = r.json()
-                            cleanup_unreferenced_snapshot(data['file'], data['recording_id'], shape_list)
                             influxdb.send_analytics_shape_data_to_influx(
                                 cia, 
                                 shape_request['camera_name'], 
@@ -187,7 +144,7 @@ class MotionDetected(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('camera_name', type = str, required = True, location = 'json')
-        self.reqparse.add_argument('file', type = str, required = False, location = 'json')
+        self.reqparse.add_argument('file', type = str, required = True, location = 'json')
         self.reqparse.add_argument('type', type = str, required = True, location = 'json')
         self.reqparse.add_argument('epoch', type = str, required = True, location = 'json')
         self.reqparse.add_argument('analytics_profile', type = str, required = False, location = 'json')
@@ -199,12 +156,8 @@ class MotionDetected(Resource):
         '''
         args = self.reqparse.parse_args()
         log.debug("motion triggered %s", args)
-        # append request to the list for further processing
-        lock.acquire()
-        shape_request_list_jpg.append(copy.deepcopy(args))
-        lock.release()
-
-        # quick motion check on single image of the motion clip
+        
+        # TBC Report motion detection to interworking
 
         return {}, 201
 
@@ -251,8 +204,6 @@ except:
     root_dir = ''
 
 # offload triggers for shape detection to a seperate thread
-shape_handler_jpg = threading.Thread(target=handle_shape_requests_jpg, args=())
-shape_handler_jpg.start()
 shape_handler_mp4 = threading.Thread(target=handle_shape_requests_mp4, args=())
 shape_handler_mp4.start()
 deep_analytics = threading.Thread(target=handle_deep_analytics, args=())

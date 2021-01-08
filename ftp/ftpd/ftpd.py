@@ -95,7 +95,7 @@ class myFTPHandler(FTPHandler):
         # Trigger the motion service based on the presence of a jpeg
         # which means that type field is filled in with jgp
         if file_type == 'jpg':
-            make_thumbnail('/root'+file)
+            # make_thumbnail('/root'+file)
             try:
                 data = {
                     'file': file, 

@@ -61,6 +61,8 @@ services:
         - TIMEZONE=$TIMEZONE
     ports:
       - "5102:5102"
+    volumes:
+      - /${ROOT_DIR}:/root
     environment:
       - CONCIERGE_IP_ADDRESS
     depends_on:
