@@ -5,12 +5,21 @@ Concierge is an enhanced Video Management System offering the following features
 * Collect motion triggers from cameras
 * Video analytics on recordings
   * Motion detection
-  * Shape detections
+  * Shape detections (e.g. car, person, ...) based on a profile (e.g. selection of objects of interest)
   * Face detection / reocognition
+  * Object comparison
   * Covered camera detection
   * Loitering
+  * ...
 * Data collection of analytics and visualization
+* Classification of objects (unknown faces, unknown objects) : identifies these persons and objects
 * Integration with Home Assistant (Home automation system)
+  * Motion events reporting , global and per camera
+  * Shape events reporting, global and per camera (e.g. person detected)
+  * Event reporting of Object classification :
+    * Unknown persons (faces)
+    * Unknow objects (car)
+    * Known objects/persons + roles (trusted person, own car, car of delivery company, ...)
 
 ---
 **note**
