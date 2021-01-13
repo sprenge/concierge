@@ -34,6 +34,8 @@ def get_desired_shapes(profile):
     '''
     shape_set = set()
     confidence_level = 0.7
+    min_skip_frame = 5
+    max_skip_frame = 5
     if not profile:
         log.info("no analytics profile set")
         return shape_set
@@ -45,6 +47,8 @@ def get_desired_shapes(profile):
         if r.status_code == 200:
             shape_list_db = r.json()['shapes']
             confidence_level = r.json()['confidence_level'] / 100
+            min_skip_frame = r.json()['min_nbr_video_frames_skipped']
+            max_skip_frame = r.json()['max_nbr_video_frames_skipped']
     except Exception as e:
         log.error(str(e))
     try:
@@ -55,7 +59,7 @@ def get_desired_shapes(profile):
                     shape_set.add(rec['shape'])
     except Exception as e:
         log.error(str(e))
-    return shape_set, confidence_level
+    return min_skip_frame, max_skip_frame, shape_set, confidence_level
 
 
 def handle_deep_analytics():
@@ -89,7 +93,10 @@ def handle_shape_requests_mp4():
         lock.release()
         if shape_request:
             log.debug("len_of_shape_request_list_mp4 {}".format(len(shape_request_list_mp4)))
-            desired_shapes, confidence_level = get_desired_shapes(shape_request['analytics_profile'])
+            min_skip_frames, max_skip_frames, desired_shapes, confidence_level = get_desired_shapes(shape_request['analytics_profile'])
+            analyse_each_n_frames = min_skip_frames
+            if len(shape_request_list_mp4) > 5:
+                analyse_each_n_frames = max_skip_frames
             if len(desired_shapes) > 0:
                 try:
                     data = {
@@ -108,7 +115,8 @@ def handle_shape_requests_mp4():
                             "recording_id": shape_request['id'],
                             "file_base": file_base,
                             "desired_shapes": json.dumps(list(desired_shapes)),
-                            "confidence_level": confidence_level
+                            "confidence_level": confidence_level,
+                            "analyse_each_n_frames": analyse_each_n_frames
                         }
                         url = "http://"+cia+":5105/shape/api/v1.0/find_shape"
                         r = requests.post(url, json=data, timeout=1200)
