@@ -191,6 +191,18 @@ services:
       - influx
     restart: always
    
+  frontend:
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile
+    ports:
+      - "80:5200"
+    environment:
+      - CONCIERGE_IP_ADDRESS
+    volumes:
+      - /${ROOT_DIR}:/root
+    restart: always
+
 networks:
   cinternal:
     internal: true

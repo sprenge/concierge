@@ -5,13 +5,14 @@ import cv2
 
 LABELS_FILE='./yolo/coco.names'
 # CONFIG_FILE='./yolo/yolov3.cfg'
-CONFIG_FILE='./yolo/yolov2-tiny.cfg'
+CONFIG_FILE='./yolo/yolov4-tiny.cfg'
 # WEIGHTS_FILE='./yolo/yolov3.weights'
-WEIGHTS_FILE='./yolo/yolov2-tiny.weights'
+WEIGHTS_FILE='./yolo/yolov4-tiny.weights'
 CONFIDENCE_THRESHOLD = 0.3
 
 LABELS = open(LABELS_FILE).read().strip().split("\n")
 net = cv2.dnn.readNetFromDarknet(CONFIG_FILE, WEIGHTS_FILE)
+print("net_yolo", net)
 
 def find_shape(image, frame_nbr=0, recording_id=None, file_base=None, desired_shapes=[], confidence_level=0.7, cia='127.0.0.1'):
     shape_list = []
@@ -44,7 +45,7 @@ def find_shape(image, frame_nbr=0, recording_id=None, file_base=None, desired_sh
 
             # filter out weak predictions by ensuring the detected
             # probability is greater than the minimum probability
-            if confidence > confidence_level:
+            if confidence > CONFIDENCE_THRESHOLD:
                 # scale the bounding box coordinates back relative to the
                 # size of the image, keeping in mind that YOLO actually
                 # returns the center (x, y)-coordinates of the bounding
@@ -65,7 +66,7 @@ def find_shape(image, frame_nbr=0, recording_id=None, file_base=None, desired_sh
 
     # apply non-maxima suppression to suppress weak, overlapping bounding
     # boxes
-    idxs = cv2.dnn.NMSBoxes(boxes, confidences, confidence_level, confidence_level)
+    idxs = cv2.dnn.NMSBoxes(boxes, confidences, CONFIDENCE_THRESHOLD, CONFIDENCE_THRESHOLD)
 
     # ensure at least one detection exists
     if len(idxs) > 0:
@@ -76,23 +77,26 @@ def find_shape(image, frame_nbr=0, recording_id=None, file_base=None, desired_sh
             (x, y) = (boxes[i][0], boxes[i][1])
             (w, h) = (boxes[i][2], boxes[i][3])
 
+            print("espr")
             try:
                 shape = LABELS[classIDs[i]]
                 if shape in desired_shapes:
-                    adict = {'shape': shape, 'confidence': confidences[i] * 100}
-                    pos = {"startX": x, "startY": y, "endX": x+w, "endY": y+h}
-                    adict["box"] = pos
-                    adict["frame_nbr"] = frame_nbr
-                    obj_str = "_snapshot{}_{}{}_frame{}".format(str(recording_id), adict['shape'], item_nbr, str(frame_nbr))
-                    if recording_id and file_base:
-                        fn = file_base+obj_str+".jpg"
-                        crop_img = image[y:y+h, x:x+w]
-                        cv2.imwrite(fn, crop_img)
-                        adict['snapshot'] = fn
-                        url = 'http://'+cia+':8000'+fn.replace('/root', '')
-                        adict['snapshot_url'] = url
-                    shape_list.append(adict)
-                    item_nbr += 1
+                    print("shape_found", confidences[i], confidence_level)
+                    if confidences[i] > confidence_level:
+                        adict = {'shape': shape, 'confidence': confidences[i] * 100}
+                        pos = {"startX": x, "startY": y, "endX": x+w, "endY": y+h}
+                        adict["box"] = pos
+                        adict["frame_nbr"] = frame_nbr
+                        obj_str = "_snapshot{}_{}{}_frame{}".format(str(recording_id), adict['shape'], item_nbr, str(frame_nbr))
+                        if recording_id and file_base:
+                            fn = file_base+obj_str+".jpg"
+                            crop_img = image[y:y+h, x:x+w]
+                            cv2.imwrite(fn, crop_img)
+                            adict['snapshot'] = fn
+                            url = 'http://'+cia+':8000'+fn.replace('/root', '')
+                            adict['snapshot_url'] = url
+                        shape_list.append(adict)
+                        item_nbr += 1
             except Exception as e:
                 print(str(e))
     return shape_list
