@@ -77,7 +77,6 @@ def find_shape(image, frame_nbr=0, recording_id=None, file_base=None, desired_sh
             (x, y) = (boxes[i][0], boxes[i][1])
             (w, h) = (boxes[i][2], boxes[i][3])
 
-            print("espr")
             try:
                 shape = LABELS[classIDs[i]]
                 if shape in desired_shapes:

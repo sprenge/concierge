@@ -196,7 +196,7 @@ services:
       context: .
       dockerfile: ./frontend/Dockerfile
     ports:
-      - "80:5200"
+      - "80:8080"
     environment:
       - CONCIERGE_IP_ADDRESS
     volumes:
