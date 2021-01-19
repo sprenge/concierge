@@ -130,6 +130,14 @@ def handle_shape_requests_mp4():
                                 recording_id=shape_request['id'], 
                                 asset_type='video',
                                 video_metadata = video_metadata)
+                            for shape_entry in shape_list:
+                                rec = {"camera_name": shape_request['camera_name']}
+                                rec['shape_type'] = shape_entry['shape']
+                                rec['snapshot_url'] = shape_entry['snapshot_url']
+                                rec['time'] = 'tbd'
+                                r = requests.post('http://'+cia+':5107/interworking/api/v1.0/register_detected_shape', json=rec)
+                                if r.status_code != 201:
+                                    log.error("register_detected_shape error {}".format(r.status_code))
                             lock.acquire()
                             deep_analytics_list.append(shape_request['id'])
                             lock.release()

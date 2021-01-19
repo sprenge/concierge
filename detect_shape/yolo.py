@@ -11,14 +11,14 @@ WEIGHTS_FILE='./yolo/yolov4-tiny.weights'
 CONFIDENCE_THRESHOLD = 0.3
 
 LABELS = open(LABELS_FILE).read().strip().split("\n")
-net = cv2.dnn.readNetFromDarknet(CONFIG_FILE, WEIGHTS_FILE)
-print("net_yolo", net)
+# net = cv2.dnn.readNetFromDarknet(CONFIG_FILE, WEIGHTS_FILE)
+# print("net_yolo", net)
 
 def find_shape(image, frame_nbr=0, recording_id=None, file_base=None, desired_shapes=[], confidence_level=0.7, cia='127.0.0.1'):
     shape_list = []
 
     (H, W) = image.shape[:2]
-
+    net = cv2.dnn.readNetFromDarknet(CONFIG_FILE, WEIGHTS_FILE)
     # determine only the *output* layer names that we need from YOLO
     ln = net.getLayerNames()
     ln = [ln[i[0] - 1] for i in net.getUnconnectedOutLayers()]

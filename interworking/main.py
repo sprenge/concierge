@@ -7,10 +7,16 @@ import threading
 import datetime
 from shutil import copyfile
 import requests
-from flask import Flask, jsonify
+from flask import Flask, jsonify, redirect, make_response
 from flask_restful import Resource, Api, reqparse
 from flask_cors import CORS
 import influxdb
+
+lock = threading.Lock()
+flush_out_after = 90 # Flush object into the database older than this value
+image_list_len = 10 # maximum number of images per shape_type
+state_db = []  # keep track of recent events
+image_db = {}  # dictionary with key shape_type, data is a list of images (oldest last)
 
 # setup logging
 try:
@@ -41,6 +47,16 @@ def time2epoch(s):
         epoch = epoch + appendix_time_influx
         return epoch
     return "0"
+
+def age_db():
+    while(1):
+        time.sleep(5)
+        lock.acquire()
+        for record in reversed(state_db):
+            if int(time.time()) > record['timestamp']+flush_out_after:
+                print("remove record from state_db", record)
+                state_db.remove(record)
+        lock.release()
 
 def get_shape_ojects():
     url = "http://"+cia+":8000/rest/analytics_shapes/"
@@ -225,6 +241,114 @@ class CreateKnownObject(Resource):
         
         return {}, 201, {'Access-Control-Allow-Origin': '*'}
 
+class RegisterDetectedShapes(Resource):
+    '''
+    Concierge detected shapes, keep track of detected objects for a while so that automation
+    systems (like home assistant) can poll for state
+    '''
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('shape_type', type = str, required = True, location = 'json')
+        self.reqparse.add_argument('camera_name', type = str, required = True, location = 'json')
+        self.reqparse.add_argument('snapshot_url', type = str, required = True, location = 'json')
+        self.reqparse.add_argument('time', type = str, required = True, location = 'json')
+        super(RegisterDetectedShapes, self).__init__()
+
+    def post(self):
+        '''
+        Create a detected shape into the state database
+        '''
+        args = self.reqparse.parse_args()
+        t = args['time']
+        record = {'type': 'shape'}
+        shape_type = args['shape_type']
+        record['shape_type'] = shape_type
+        record['camera_name'] = args['camera_name']
+        record['snapshot_url'] = args['snapshot_url']
+        record['time'] = t
+        record['timestamp'] = int(time.time())
+        lock.acquire()
+        if shape_type not in image_db:
+            image_db[shape_type] = []
+        image_db[shape_type].insert(0,args['snapshot_url'])
+        if len(image_db[shape_type]) > image_list_len:
+            del image_db[shape_type][-1]
+        state_db.append(record)        
+        lock.release()
+
+        return {}, 201, {'Access-Control-Allow-Origin': '*'}
+
+class ShapesDetected(Resource):
+    '''
+    REST API class getting shapes for a given recording
+    '''
+    def __init__(self):
+        super(ShapesDetected, self).__init__()
+
+    def get(self, camera_name, shape_type):
+        shape_dict = {"detected": False}
+        if camera_name== "all_cameras":
+            lock.acquire()
+            copy_db = copy.deepcopy(state_db)
+            lock.release()
+            for record in copy_db:
+                if record['shape_type'] == shape_type:
+                    if record['type'] == 'shape':
+                        shape_dict['detected'] = True
+                        shape_dict['camera_name'] = record['camera_name']
+                        shape_dict['shape_type'] = shape_type
+                        shape_dict['snapshot_url'] = record['snapshot_url']
+        else:
+            # specific camera
+            pass
+
+        return shape_dict, 200, {'Access-Control-Allow-Origin': '*'}
+
+class LastDetectedImages(Resource):
+    '''
+    REST API return last image detected
+    '''
+    def __init__(self):
+        super(LastDetectedImages, self).__init__()
+
+    def get(self, shape_type, sequence_nbr):
+        # all_types
+        seq_nbr = int(sequence_nbr)
+        if seq_nbr >= image_list_len:
+            seq_nbr = image_list_len - 1
+        print(image_db, shape_type, seq_nbr)
+        if shape_type != 'all_shapes':
+            try:
+                url = image_db[shape_type][seq_nbr]
+                print(url)
+                redirect(url)
+            except Exception as e:
+                print(str(e))
+
+        return [], 200, {'Access-Control-Allow-Origin': '*'}
+
+
+@app.route('/interworking/api/v1.0/last_detected_images/<shape_type>/<sequence_nbr>.jpg', methods=['GET'])
+def last_detected_images(shape_type, sequence_nbr):
+    seq_nbr = int(sequence_nbr)
+    if seq_nbr >= image_list_len:
+        seq_nbr = image_list_len - 1
+    if shape_type != 'all_shapes':
+        url = image_db[shape_type][seq_nbr]
+        r = requests.get(url)
+        if r.status_code == 200:
+            data = None
+            for chunk in r.iter_content(1024):
+                if data:
+                    data += chunk
+                else:
+                    data = chunk
+            response = make_response(data)
+            response.headers.set('Content-Type', 'image/jpeg')
+            response.headers.set('Content-Disposition', 'attachment', filename='%s.jpg' % seq_nbr)
+            return response
+
+
 
 # bind resource for REST API service
 api.add_resource(ShapesVideoInflux, '/interworking/api/v1.0/shapes_video/<string:recording_id>', endpoint = 'shapes_video')
@@ -232,6 +356,9 @@ api.add_resource(GetRecordings, '/interworking/api/v1.0/get_recordings/<string:s
 api.add_resource(GetVideoShapes, '/interworking/api/v1.0/get_video_shapes/<string:shape>/<string:start_time>/<string:end_time>', endpoint = 'get_video_shapes')
 api.add_resource(GetShapeObjects, '/interworking/api/v1.0/get_shape_objects', endpoint = 'get_shape_objects')
 api.add_resource(CreateKnownObject, '/interworking/api/v1.0/create_known_object', endpoint = 'create_known_object')
+api.add_resource(RegisterDetectedShapes, '/interworking/api/v1.0/register_detected_shape', endpoint = 'register_detected_shape')
+api.add_resource(ShapesDetected, '/interworking/api/v1.0/shape_detected/<string:camera_name>/<string:shape_type>', endpoint = 'shape_detected')
+# api.add_resource(LastDetectedImages, '/interworking/api/v1.0/last_detected_images/<string:shape_type>/<string:sequence_nbr>', endpoint = 'last_detected_images')
 
 
 try:
@@ -241,4 +368,6 @@ except:
 
 log.info("CONCIERGE_IP_ADDRESS %s", cia)
 
+t1 = threading.Thread(target=age_db, args=())
+t1.start()
 app.run(host="0.0.0.0", port=5107)
