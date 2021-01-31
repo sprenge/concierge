@@ -60,6 +60,18 @@ docker-compose logs -f
 docker-compose down
 ```
 
+Redirection of docker logs to syslog of the host machine : create /etc/docker/daemon.json and restart docker
+
+```bash
+{
+  "log-driver": "syslog",
+  "log-opts": {
+    "syslog-address": "udp://192.168.1.59:514",
+    "tag": "{{.Name}}"
+  }
+}
+```
+
 # Camera control
 
 Open a browser and navigate to the following URL : http://<concierge ip>/admin
