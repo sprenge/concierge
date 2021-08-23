@@ -41,7 +41,7 @@ def create_deep_data():
         log.error(str(e))
 
 def recordings_cleaner():
-    clean(cia, log)
+    clean(cia, log, root_dir)
 
 schedule.every().hour.do(recordings_cleaner)
 schedule.every(15).minutes.do(create_deep_data)

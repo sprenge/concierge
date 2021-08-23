@@ -152,6 +152,12 @@ class FindShape(Resource):
                             cia=cia)
                         up_list = filter_unique_positions(fsl)
                         shape_list.extend(up_list)
+                        if fsl:
+                            # Create frame
+                            frame_base = args['file'].replace(".mp4", "")
+                            frame_fn = frame_base + "_frame{}.jpg".format(frame_nbr)
+                            if not os.path.isfile(frame_fn):
+                                cv2.imwrite(frame_fn, frame)
                     if frame_nbr == 30:
                         try:
                             # write first jpg to disk

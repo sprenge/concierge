@@ -270,7 +270,14 @@ class RegisterDetectedShapes(Resource):
         lock.acquire()
         if shape_type not in image_db:
             image_db[shape_type] = []
-        image_db[shape_type].insert(0,args['snapshot_url'])
+        match = re.match("(.*)_snapshot\d+_{}\d+_frame(\d+).jpg".format(shape_type), args['snapshot_url'])
+        image_url = None
+        if match:
+            image_url = match.group(1) + "_frame{}.jpg".format(match.group(2))
+        else:
+            image_url = args['snapshot_url']
+        log.error("espr_debug {}".format(image_url))
+        image_db[shape_type].insert(0, image_url)
         if len(image_db[shape_type]) > image_list_len:
             del image_db[shape_type][-1]
         state_db.append(record)        

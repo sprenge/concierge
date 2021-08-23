@@ -10,13 +10,14 @@ def datetime2epoch(dt):
     return int(epoch_time)
 
 disk_high = 0.85
-disk_low = 0.8
+disk_low = 0.79
 
-def clean(cia, log):
+def clean(cia, log, root_dir):
     stat = shutil.disk_usage('/root')
     disk_used = stat.used/stat.total
     url = "http://"+cia+':8000/rest/recordings'
     items_cleaned = 0
+    print(disk_used, disk_low)
     while disk_used > disk_low:
         stat = shutil.disk_usage('/root')
         disk_used = stat.used/stat.total
@@ -54,10 +55,9 @@ def clean(cia, log):
         except Exception as e:
             log.error(str(e))
         path, file_extension = os.path.splitext(rec['file_path_video'])
-        # exts = ['.jpg', '.gif', '.mp4']
-        print("espr_clean_up_files", path)
-        file_list = glob.glob('/root'+path+"*")
-        print("file_list", file_list)
+        jp = os.path.join('/root', path.strip('/')) + "*"
+        file_list = glob.glob(jp)
+        print("espr_file_list", jp, file_list)
         for fn in file_list:
             if os.path.exists(fn):
                 log.debug("cleaned up file {}".format(fn))
@@ -68,4 +68,17 @@ def clean(cia, log):
         disk_used = stat.used/stat.total        
     if items_cleaned > 0:
         log.info("cleaned up below the threshold {}".format(disk_low))
-    
+
+class local_logger():
+    def __init__(self):
+        pass
+    def error(self, msg):
+        print(msg)
+    def info(self, msg):
+        print(msg)
+    def debug(self, msg):
+        print(msg)
+
+if __name__ == "__main__":
+    local_log = local_logger()
+    clean("192.168.1.59", local_log, '/camera')
