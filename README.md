@@ -39,6 +39,7 @@ apt-get -y install git
 git clone https://github.com/sprenge/concierge.git
 cd concierge
 chmod +x install/install.sh
+cd install
 ./install.sh
 # be patient while concierge is installing
 reboot
